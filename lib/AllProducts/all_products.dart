@@ -1,6 +1,7 @@
 import 'package:beauty_app/components/products_List.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AllProducts extends StatefulWidget {
   const AllProducts({super.key});
@@ -13,46 +14,66 @@ class _AllProductsState extends State<AllProducts> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Matching the warm cream background from your design
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsetsGeometry.fromLTRB(15, 50, 10, 30),
+          physics: const BouncingScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'All Products',
-                style: Theme.of(
-                  context,
-                ).textTheme.displayLarge?.copyWith(fontSize: 32),
+              // --- Header Section ---
+              Padding(
+                padding: const EdgeInsets.fromLTRB(25, 40, 25, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'All Products',
+                      style: GoogleFonts.inter(
+                        fontSize: 48,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -1.5,
+                        color: Colors.black,
+                      ),
+                    ).animate().fadeIn(duration: 600.ms).slideX(begin: -0.1, end: 0),
+                    const SizedBox(height: 8),
+                    Text(
+                      '18 exclusive creations',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        color: Colors.black45,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ).animate().fadeIn(delay: 200.ms),
+                  ],
+                ),
               ),
-          
-              const SizedBox(height: 10),
+
+              const SizedBox(height: 20),
+
+              // --- Grid Section ---
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  childAspectRatio: 0.5,
-                  crossAxisSpacing: 15,
-                  mainAxisSpacing: 15,
+                  // Adjusted ratio to match the taller, rounded cards in screenshot
+                  childAspectRatio: 0.62, 
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 20,
                 ),
-                itemCount: 6,
+                itemCount: 6, // Match your data length
                 itemBuilder: (context, index) {
+                  // Using the ProductsList component we refined earlier
                   return const ProductsList()
                       .animate()
                       .fadeIn(duration: 600.ms, delay: (index * 100).ms)
-                      .scale(
-                        begin: const Offset(0.0, 0.0),
-                        end: const Offset(1.0, 1.0),
-                        duration: 700.ms,
-                        curve: Curves.easeOutBack,
-                        delay: (index * 100).ms,
-                      );
+                      .moveY(begin: 30, end: 0, curve: Curves.easeOutCubic);
                 },
               ),
+              
+              const SizedBox(height: 100), // Bottom padding for nav bar
             ],
           ),
         ),
@@ -60,8 +81,3 @@ class _AllProductsState extends State<AllProducts> {
     );
   }
 }
-
-
-
-
-

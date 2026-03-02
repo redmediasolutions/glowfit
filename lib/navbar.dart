@@ -43,7 +43,7 @@ final GoRouter appRouter = GoRouter(
         ),
          GoRoute(
           path: '/home',
-           builder: (context, state) => homepage(),
+           builder: (context, state) => Homepage(),
         ),
           GoRoute(
           path: '/AllProducts',

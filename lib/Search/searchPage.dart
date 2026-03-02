@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+
 class Searchpage extends StatefulWidget {
   const Searchpage({super.key});
 
@@ -15,48 +16,64 @@ class _SearchpageState extends State<Searchpage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Matching the warm cream background from your design
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsetsGeometry.fromLTRB(15, 50, 10, 30),
+          physics: const BouncingScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Search',
-                style: Theme.of(
-                  context,
-                ).textTheme.displayLarge?.copyWith(fontSize: 32),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                child: Text(
+                  'Search',
+                  style: GoogleFonts.inter(
+                    fontSize: 48,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -1,
+                  ),
+                ),
               ),
-              const SizedBox(height: 30,),
-              const Search(),
-
               const SizedBox(height: 30),
-              ActionChoiceExample(),
-              const SizedBox(height: 10),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 25.0),
+                child: SearchField(), // Updated search component
+              ),
+              const SizedBox(height: 35),
+              const ActionChoiceExample(), // The Category chips
+              const SizedBox(height: 40),
+              
+              // Results counter
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                child: Text(
+                  "18 RESULTS",
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    letterSpacing: 2,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ),
+              
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  childAspectRatio: 0.5,
-                  crossAxisSpacing: 15,
-                  mainAxisSpacing: 15,
+                  childAspectRatio: 0.62, // Adjusted for taller cards
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 20,
                 ),
-                itemCount: 6,
+                itemCount: 4,
                 itemBuilder: (context, index) {
                   return const ProductsList()
                       .animate()
-                      .fadeIn(duration: 600.ms, delay: (index * 100).ms)
-                      .scale(
-                        begin: const Offset(0.0, 0.0),
-                        end: const Offset(1.0, 1.0),
-                        duration: 700.ms,
-                        curve: Curves.easeOutBack,
-                        delay: (index * 100).ms,
-                      );
+                      .fadeIn(duration: 500.ms, delay: (index * 100).ms)
+                      .slideY(begin: 0.1, end: 0);
                 },
               ),
             ],

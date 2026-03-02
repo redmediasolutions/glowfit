@@ -17,41 +17,30 @@ class MainApp extends StatelessWidget {
       title: 'Beauty App',
       theme: ThemeData(
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFFEF7E7), // Your cream background
-        
-        // Define Global Text Styles here
-        textTheme:  TextTheme(
-          // 1. For "Radiance Redefined" (Large Headings)
-          displayLarge: GoogleFonts.inter( 
-  textStyle:  TextStyle(
-    color: Color(0xFF1A1A1A),
-    fontSize: 52,
-    fontWeight: FontWeight.w600,
-    height: 1.1,
-    letterSpacing: -0.5,
-  ),
-),
-          // 2. For "NEW ARRIVAL" / "WELCOME BACK" (Small Labels)
-          labelLarge: TextStyle(
-            color: Colors.blueGrey, 
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
+        scaffoldBackgroundColor: Colors.white,
+        dividerTheme: const DividerThemeData(
+          color: Color(0xFFEEEEEE),
+          thickness: 1,
+        ),
+        textTheme: TextTheme(
+          // For "Radiance Redefined" and "Collections"
+          displayLarge: GoogleFonts.tenorSans(
+            color: const Color(0xFF1A1A1A),
+            fontSize: 52,
+            height: 1.05,
+          ),
+          // For "NEW ARRIVAL" / "PHILOSOPHY" labels
+          labelLarge: GoogleFonts.inter(
+            color: Colors.black.withOpacity(0.4),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
             letterSpacing: 4,
           ),
-          
-          // 3. For Descriptions / Body text
-          bodyLarge: TextStyle(
-            color: Color(0x99000000), 
-            fontSize: 16,
-            height: 1.5,
-          ),
-          
-          // 4. For Button Text
-          labelMedium: TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 2,
+          // For Descriptions
+          bodyLarge: GoogleFonts.inter(
+            color: Colors.black.withOpacity(0.5),
+            fontSize: 15,
+            height: 1.6,
           ),
         ),
       ),
