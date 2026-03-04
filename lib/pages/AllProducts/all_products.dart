@@ -1,6 +1,9 @@
+
 import 'package:beauty_app/components/products_List.dart';
+import 'package:beauty_app/components/secondaryscaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AllProducts extends StatefulWidget {
@@ -13,8 +16,8 @@ class AllProducts extends StatefulWidget {
 class _AllProductsState extends State<AllProducts> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
+    return Secondaryscaffold(
+     
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -52,25 +55,31 @@ class _AllProductsState extends State<AllProducts> {
               const SizedBox(height: 20),
 
               // --- Grid Section ---
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  // Adjusted ratio to match the taller, rounded cards in screenshot
-                  childAspectRatio: 0.62, 
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 20,
+              GestureDetector(
+              onTap: () {
+               /// Navigator.push(context,MaterialPageRoute(builder: (context)=>ProductsView()));
+               context.go('/productview');
+              },
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    // Adjusted ratio to match the taller, rounded cards in screenshot
+                    childAspectRatio: 0.62, 
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 20,
+                  ),
+                  itemCount: 6, // Match your data length
+                  itemBuilder: (context, index) {
+                    // Using the ProductsList component we refined earlier
+                    return const ProductsList()
+                        .animate()
+                        .fadeIn(duration: 600.ms, delay: (index * 100).ms)
+                        .moveY(begin: 30, end: 0, curve: Curves.easeOutCubic);
+                  },
                 ),
-                itemCount: 6, // Match your data length
-                itemBuilder: (context, index) {
-                  // Using the ProductsList component we refined earlier
-                  return const ProductsList()
-                      .animate()
-                      .fadeIn(duration: 600.ms, delay: (index * 100).ms)
-                      .moveY(begin: 30, end: 0, curve: Curves.easeOutCubic);
-                },
               ),
               
               const SizedBox(height: 100), // Bottom padding for nav bar

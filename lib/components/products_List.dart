@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class ProductsList extends StatelessWidget {
+class ProductsList extends StatefulWidget {
+  
   const ProductsList({super.key});
 
+  @override
+  State<ProductsList> createState() => _ProductsListState();
+}
+
+class _ProductsListState extends State<ProductsList> {
+ 
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -56,7 +63,7 @@ class ProductsList extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '\$245',
+                    '₹ 245',
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -67,6 +74,8 @@ class ProductsList extends StatelessWidget {
               ),
             ),
           ),
+
+          
         ],
       ),
     );

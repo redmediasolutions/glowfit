@@ -1,7 +1,9 @@
 import 'package:beauty_app/components/products_List.dart';
 import 'package:beauty_app/components/search.dart';
+import 'package:beauty_app/components/secondaryscaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 
@@ -15,8 +17,8 @@ class Searchpage extends StatefulWidget {
 class _SearchpageState extends State<Searchpage> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
+    return Secondaryscaffold(
+  
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -58,23 +60,28 @@ class _SearchpageState extends State<Searchpage> {
                 ),
               ),
               
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.62, // Adjusted for taller cards
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 20,
-                ),
-                itemCount: 4,
-                itemBuilder: (context, index) {
-                  return const ProductsList()
-                      .animate()
-                      .fadeIn(duration: 500.ms, delay: (index * 100).ms)
-                      .slideY(begin: 0.1, end: 0);
+              GestureDetector(
+                onTap: (){
+                  context.go('/productview');
                 },
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.62, // Adjusted for taller cards
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 20,
+                  ),
+                  itemCount: 4,
+                  itemBuilder: (context, index) {
+                    return const ProductsList()
+                        .animate()
+                        .fadeIn(duration: 500.ms, delay: (index * 100).ms)
+                        .slideY(begin: 0.1, end: 0);
+                  },
+                ),
               ),
             ],
           ),

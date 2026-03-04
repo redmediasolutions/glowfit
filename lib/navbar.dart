@@ -1,8 +1,9 @@
 import 'dart:async';
-import 'package:beauty_app/AllProducts/all_products.dart';
-import 'package:beauty_app/Home/home.dart';
-import 'package:beauty_app/Search/searchPage.dart';
-import 'package:beauty_app/profile/profile.dart';
+import 'package:beauty_app/pages/AllProducts/Products_view.dart';
+import 'package:beauty_app/pages/AllProducts/all_products.dart';
+import 'package:beauty_app/pages/Home/home.dart';
+import 'package:beauty_app/pages/Search/searchPage.dart';
+import 'package:beauty_app/pages/profile/profile.dart';
 import 'package:beauty_app/shell.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -30,7 +31,11 @@ final GoRouter appRouter = GoRouter(
     //   path: '/login',
     //   builder: (context, state) => const LoginPage(),
     // ),
-
+  GoRoute(
+          path: '/productview',
+          builder: (context, state) => const ProductsView(),
+        ),
+       
     // 🔒 APP (SHELL ONCE)
     ShellRoute(
       builder: (context, state, child) {
@@ -39,7 +44,7 @@ final GoRouter appRouter = GoRouter(
       routes: [
         GoRoute(
           path: '/',
-          redirect: (_, __) => '/home',
+          redirect: (_, _) => '/home',
         ),
          GoRoute(
           path: '/home',
@@ -58,7 +63,10 @@ final GoRouter appRouter = GoRouter(
            builder: (context, state) => Profile(),
         ),
       
-       
+        GoRoute(
+          path: '/AllProducts',
+          builder: (context, state) => const AllProducts(),
+        ),
       ],
     ),
   ],
