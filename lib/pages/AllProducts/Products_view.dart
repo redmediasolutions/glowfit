@@ -1,4 +1,5 @@
 import 'package:beauty_app/models/cartitem.dart';
+import 'package:beauty_app/models/product_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 Widget scrollTriggered(Widget child, String key) {
+
   ValueNotifier<bool> isVisible = ValueNotifier(false);
 
   return VisibilityDetector(
@@ -29,7 +31,8 @@ Widget scrollTriggered(Widget child, String key) {
   );
 }
 class ProductsView extends StatefulWidget {
-  const ProductsView({super.key});
+  final Productsmodel product;
+  const ProductsView({super.key, required this.product});
 
   @override
   State<ProductsView> createState() => _ProductsViewState();
@@ -41,16 +44,17 @@ class _ProductsViewState extends State<ProductsView> {
 void _addToCart() {
   setState(() {
     // We search the GLOBAL list now
-    int index = globalCart.indexWhere((item) => item.name == "Radiance Serum");
+   int index = globalCart.indexWhere((item) => item.name == widget.product.name);
     
     if (index != -1) {
       globalCart[index].quantity++;
     } else {
       globalCart.add(
         CartItem(
-          name: "Radiance Serum",
-          price: "₹ 245",
-          imageUrl: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=200', image: '',
+        name: widget.product.name,
+            price: "₹ ${widget.product.regularPrice}",
+            imageUrl: widget.product.image ?? '', 
+            image: '',
         ),
       );
     }
@@ -95,6 +99,7 @@ void _addToCart() {
  
   @override
   Widget build(BuildContext context) {
+    final p = widget.product;
     final double screenHeight = MediaQuery.of(context).size.height;
     final double appBarHeight = kToolbarHeight + 20;
     return Scaffold(
@@ -163,6 +168,7 @@ floatingActionButton: Padding(
 ),
       
       body: SingleChildScrollView(
+        
         controller: _scrollController,
         physics: const BouncingScrollPhysics(),
         child: Column(
@@ -173,10 +179,10 @@ floatingActionButton: Padding(
             // --- SECTION 1: HERO (Large spacing, occupies most of screen) ---
             SizedBox(
               height: screenHeight - appBarHeight - 60,
-              child: _buildHeroSection(context),
+              child: _buildHeroSection(context, p),
             ),
             
-           scrollTriggered(_description(context), 'desc'),
+         scrollTriggered(_description(context, p), 'desc'),
             const SizedBox(height: 100,),
          scrollTriggered(_image(context), 'Image')   ,
             const SizedBox(height: 100,),
@@ -201,7 +207,7 @@ scrollTriggered(_buildKeyIngredients(context), 'KeyIngredients')   ,
     );
   }
 
-  Widget _buildHeroSection(BuildContext context) {
+  Widget _buildHeroSection(BuildContext context,Productsmodel p) {
     return Stack(
       children: [
         // Grey Block background for the image
@@ -212,7 +218,7 @@ scrollTriggered(_buildKeyIngredients(context), 'KeyIngredients')   ,
           color: const Color(0xFFF5F5F7),
           child: Center(
             child: Image.network(
-              'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000&auto=format&fit=crop',
+             p.image ?? 'https://via.placeholder.com/380',
               height: 380,
               fit: BoxFit.contain,
             ).animate().fadeIn(duration: 1200.ms).moveY(begin: 20, end: 0),
@@ -228,7 +234,7 @@ scrollTriggered(_buildKeyIngredients(context), 'KeyIngredients')   ,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                "Skin Care",
+               p.name,
                 style: GoogleFonts.inter(
                   letterSpacing: 3,
                   fontSize: 12,
@@ -238,7 +244,7 @@ scrollTriggered(_buildKeyIngredients(context), 'KeyIngredients')   ,
               ),
               const SizedBox(height: 15),
               Text(
-                "Radiance\nSerum",
+                p.name,
                 style: GoogleFonts.tenorSans(
                   fontSize: 58,
                   height: 1.0,
@@ -247,7 +253,7 @@ scrollTriggered(_buildKeyIngredients(context), 'KeyIngredients')   ,
               ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.1, end: 0),
               const SizedBox(height: 25),
               Text(
-                "\$ 245",
+                "₹ ${p.regularPrice}",
                 style: GoogleFonts.tenorSans(
                   fontSize: 20,
                   height: 1.0,
@@ -263,7 +269,7 @@ scrollTriggered(_buildKeyIngredients(context), 'KeyIngredients')   ,
     );
   }
 
- Widget _description(BuildContext context) {
+ Widget _description(BuildContext context, Productsmodel p) {
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 25),
     child: Column(

@@ -18,7 +18,9 @@ class Productsmodel {
   factory Productsmodel.fromJson(Map<String, dynamic> json) {
     
   
-    final List<int> categoryIds = (json['id'] as List?)?.map((e) => e['id']).whereType<int>().toList() ?? [];
+   final List<int> categoryIds = (json['categories'] as List?)
+          ?.map((e) => e['id'] as int) // Extract the 'id' from each category object
+          .toList() ?? [];
     final bool isNotForSale = categoryIds.contains(94);
     final bool manageStock = json['manage_stock'] == true;
     final int? stockQuantity = json['stock_quantity'] != null ? int.tryParse(json['stock_quantity'].toString()) : null;

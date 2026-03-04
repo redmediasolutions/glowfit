@@ -1,6 +1,7 @@
-
 import 'package:beauty_app/components/products_List.dart';
 import 'package:beauty_app/components/secondaryscaffold.dart';
+import 'package:beauty_app/models/product_model.dart';
+import 'package:beauty_app/services/api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -14,10 +15,16 @@ class AllProducts extends StatefulWidget {
 }
 
 class _AllProductsState extends State<AllProducts> {
+  late Future<List<Productsmodel>> _productsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _productsFuture = APIService.fetchAllProducts();
+  }
   @override
   Widget build(BuildContext context) {
     return Secondaryscaffold(
-     
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -31,14 +38,17 @@ class _AllProductsState extends State<AllProducts> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'All Products',
-                      style: GoogleFonts.inter(
-                        fontSize: 48,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -1.5,
-                        color: Colors.black,
-                      ),
-                    ).animate().fadeIn(duration: 600.ms).slideX(begin: -0.1, end: 0),
+                          'All Products',
+                          style: GoogleFonts.inter(
+                            fontSize: 48,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -1.5,
+                            color: Colors.black,
+                          ),
+                        )
+                        .animate()
+                        .fadeIn(duration: 600.ms)
+                        .slideX(begin: -0.1, end: 0),
                     const SizedBox(height: 8),
                     Text(
                       '18 exclusive creations',
@@ -56,32 +66,64 @@ class _AllProductsState extends State<AllProducts> {
 
               // --- Grid Section ---
               GestureDetector(
-              onTap: () {
-               /// Navigator.push(context,MaterialPageRoute(builder: (context)=>ProductsView()));
-               context.go('/productview');
-              },
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    // Adjusted ratio to match the taller, rounded cards in screenshot
-                    childAspectRatio: 0.62, 
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 20,
-                  ),
-                  itemCount: 6, // Match your data length
-                  itemBuilder: (context, index) {
-                    // Using the ProductsList component we refined earlier
-                    return const ProductsList()
-                        .animate()
-                        .fadeIn(duration: 600.ms, delay: (index * 100).ms)
-                        .moveY(begin: 30, end: 0, curve: Curves.easeOutCubic);
-                  },
-                ),
+                onTap: () {
+                  /// Navigator.push(context,MaterialPageRoute(builder: (context)=>ProductsView()));
+                  context.go('/productview');
+                },
+           child:   FutureBuilder<List<Productsmodel>>(
+  future: _productsFuture,
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 50),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (snapshot.hasError) {
+      return const Center(child: Text("Error loading products"));
+    }
+
+    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+      return const Center(child: Text("No products found"));
+    }
+
+    final products = snapshot.data!;
+
+    return GridView.builder(
+      shrinkWrap: true, // Crucial: Allows GridView to live inside a ScrollView
+      physics: const NeverScrollableScrollPhysics(), // Let the parent handle scrolling
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      itemCount: products.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,          // 2 items per row
+        mainAxisSpacing: 20,        // Vertical space between cards
+        crossAxisSpacing: 15,       // Horizontal space between cards
+        childAspectRatio: 0.75,     // Adjust this to fit your card's height/width ratio
+      ),
+      itemBuilder: (context, index) {
+        final p = products[index];
+
+        return GestureDetector(
+         onTap: () => context.push('/productview', extra: p),
+          child: ProductsList(
+            id: p.id.toString(),
+            name: p.name,
+            imageUrl: p.image,
+            regularPrice: p.regularPrice,
+            onAddToCart: () {
+              print("Added ${p.name} to cart");
+            },
+          ),
+        );
+      },
+    );
+  },
+)
               ),
-              
+
               const SizedBox(height: 100), // Bottom padding for nav bar
             ],
           ),

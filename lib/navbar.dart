@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:beauty_app/models/product_model.dart';
 import 'package:beauty_app/pages/AllProducts/Products_view.dart';
 import 'package:beauty_app/pages/AllProducts/all_products.dart';
 import 'package:beauty_app/pages/Home/home.dart';
@@ -31,10 +32,20 @@ final GoRouter appRouter = GoRouter(
     //   path: '/login',
     //   builder: (context, state) => const LoginPage(),
     // ),
-  GoRoute(
-          path: '/productview',
-          builder: (context, state) => const ProductsView(),
-        ),
+GoRoute(
+  path: '/productview',
+  builder: (context, state) {
+    // 1. Check if extra exists and is the right model
+    if (state.extra != null && state.extra is Productsmodel) {
+      return ProductsView(product: state.extra as Productsmodel);
+    }
+
+    // 2. Fallback if something went wrong (prevents the crash)
+    return const Scaffold(
+      body: Center(child: Text("Product data missing")),
+    );
+  },
+),
        
     // 🔒 APP (SHELL ONCE)
     ShellRoute(

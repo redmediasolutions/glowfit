@@ -2,8 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ProductsList extends StatefulWidget {
+   final String? id;
+  final String? imageUrl;
+  final String name;
+  final double? regularPrice;
+   final VoidCallback? onAddToCart;
   
-  const ProductsList({super.key});
+  const ProductsList({super.key, this.id, this.imageUrl, 
+  required this.name, this.regularPrice, this.onAddToCart});
 
   @override
   State<ProductsList> createState() => _ProductsListState();
@@ -27,10 +33,20 @@ class _ProductsListState extends State<ProductsList> {
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
-                child: Image.network(
-                  'https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcTVrKMVhejKmRt88UaHOv_mpTmfDBKlOZUW_xoQl09QZ9_4tPdj',
-                  fit: BoxFit.contain,
-                ),
+                child: Container(
+                  margin: const EdgeInsets.all(20.0),
+                  decoration: BoxDecoration(
+                    image: widget.imageUrl != null
+                    ? DecorationImage(
+                        image: NetworkImage(widget.imageUrl!), // Use widget.imageUrl
+                        fit: BoxFit.contain,
+                      )
+                    : null,
+                  ),
+                  child: widget.imageUrl == null 
+                  ? const Center(child: Icon(Icons.image_not_supported)) 
+                  : null,
+                )
               ),
             ),
           ),
@@ -44,7 +60,7 @@ class _ProductsListState extends State<ProductsList> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'SKINCARE',
+                   widget.name,
                     style: GoogleFonts.inter(
                       color: Colors.grey[500],
                       fontSize: 10,
@@ -54,7 +70,7 @@ class _ProductsListState extends State<ProductsList> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Radiance Serum',
+                   widget.name,
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -63,7 +79,7 @@ class _ProductsListState extends State<ProductsList> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '₹ 245',
+                  "₹${widget.regularPrice?.toStringAsFixed(2) ?? '--'}",
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
