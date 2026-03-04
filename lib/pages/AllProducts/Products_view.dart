@@ -37,7 +37,7 @@ class ProductsView extends StatefulWidget {
 
 class _ProductsViewState extends State<ProductsView> {
 
-  List<CartItem> _cartItems = []; 
+  final List<CartItem> _cartItems = []; 
 void _addToCart() {
   setState(() {
     // We search the GLOBAL list now
@@ -120,60 +120,45 @@ void _addToCart() {
         ),
        
       ),
-floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-floatingActionButton: Container(
-  // Use margin instead of fixed height for better responsiveness
-  margin: const EdgeInsets.only(bottom: 0), 
-  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
-  decoration: BoxDecoration(
-    color: Colors.white.withOpacity(0.95),
-    boxShadow: [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.05),
-        blurRadius: 20,
-        offset: const Offset(0, -5),
-      ),
-    ],
-  ),
-  child: Column(
-    mainAxisSize: MainAxisSize.min, // Essential: Makes container wrap the button height
-    children: [
-      GestureDetector(
-        onTap: () {
-          _addToCart();
-          print("DEBUG: Items in cart now: ${_cartItems.length}");
-          
-          // Optional: Add the green SnackBar we built earlier here!
-        },
-        child: Container(
-          height: 60,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.black,
-            borderRadius: BorderRadius.circular(8), // Slightly softer luxury feel
+floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat, 
+floatingActionButton: Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 20), 
+  child: GestureDetector(
+    onTap: () {
+      _addToCart();
+      print("DEBUG: Items in cart now: ${_cartItems.length}");
+    },
+    child: Container(
+      height: 60,
+      width: double.infinity, 
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(15), 
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8), 
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 20),
-              const SizedBox(width: 12),
-              Text(
-                "ADD TO CART",
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              
-            ],
-          ),
-        ),
+        ],
       ),
-      // Account for the bottom safe area (home indicator on iPhone/Android)
-      SizedBox(height: MediaQuery.of(context).padding.bottom),
-    ],
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 20),
+          const SizedBox(width: 12),
+          Text(
+            "ADD TO CART",
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+            ),
+          ),
+        ],
+      ),
+    ),
   ),
 ),
       

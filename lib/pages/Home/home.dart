@@ -16,7 +16,7 @@ class Homepage extends StatefulWidget {
 class _HomepageState extends State<Homepage> {
   // Define the ScrollController to link animations with scroll position
   final ScrollController _scrollController = ScrollController();
-
+bool _isMenuOpen = false;
   @override
   void dispose() {
     _scrollController.dispose();
@@ -40,7 +40,7 @@ class _HomepageState extends State<Homepage> {
     return VisibilityDetector(
       key: Key(key),
       onVisibilityChanged: (info) {
-        // Trigger when 15% of the widget is visible to ensure a smooth start
+       
         if (info.visibleFraction > 0.15 && !isVisible.value) {
           isVisible.value = true;
         }
@@ -61,129 +61,90 @@ class _HomepageState extends State<Homepage> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          'LUXĒ',
-          style: GoogleFonts.tenorSans(
-            textStyle: const TextStyle(
-              color: Colors.black,
-              fontSize: 22,
-              letterSpacing: 6,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 15),
-            child: IconButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const CartPage()),
-                );
-              },
-              icon: Badge(
-                label: Text(
-                  // Calculates total quantity of all items in the cart
-                  globalCart
-                      .fold(0, (sum, item) => sum + item.quantity)
-                      .toString(),
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
+     
+      body: TopVerticalDrawer(
+        isOpen: _isMenuOpen,
+        onToggle: () => setState(() => _isMenuOpen = !_isMenuOpen),
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // --- SECTION 1: HERO (Large spacing, occupies most of screen) ---
+              SizedBox(
+                height: screenHeight - appBarHeight - 60,
+                child: _buildHeroSection(context),
+              ),
+              const SizedBox(height: 50),
+        
+              // --- SECTION 2: COLLECTIONS (Scroll Animated) ---
+              _buildCollectionHeader(),
+        
+              _buildHorizontalCollection(),
+        
+              const SizedBox(height: 160),
+        
+              // _buildAnimatedSection(
+              //   child: Column(
+              //     crossAxisAlignment: CrossAxisAlignment.start,
+              //     children: [
+              //       _buildCollectionHeader(),
+              //       const SizedBox(height: 40),
+              //       _buildHorizontalCollection(),
+              //     ],
+              //   ),
+              // ),
+        
+              // --- SECTION 3: PHILOSOPHY (Scroll Animated) ---
+              _buildAnimatedSection(
+                child: Column(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 25),
+                      child: Divider(color: Colors.black12, thickness: 1),
+                    ),
+                    scrollTriggered(
+                      (visible) => _buildPhilosophySection(context, visible),
+                      'Philosophy',
+                    ),
+                  ],
                 ),
-                // Only show the badge if the cart is not empty
-                isLabelVisible: globalCart.isNotEmpty,
-                backgroundColor: Colors.redAccent, // Luxury black badge
-                child: const Icon(
-                  Icons.shopping_bag_outlined,
-                  color: Colors.black,
-                  size: 26,
+              ),
+        
+              _buildAnimatedSection(
+                child: Column(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 25),
+                      child: Divider(color: Colors.black12, thickness: 1),
+                    ),
+                    // In your Column children:
+                    scrollTriggered(
+                      (visible) => _buildOurIngredients(context, visible),
+                      'desc-section',
+                    ),
+                  ],
                 ),
               ),
-            ),
+              _buildAnimatedSection(
+                child: Column(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 25),
+                      child: Divider(color: Colors.black12, thickness: 1),
+                    ),
+                    // In your Column children:
+                    scrollTriggered(
+                      (visible) => _buildShopByCategory(context, visible),
+                      'desc-section',
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 120),
+            ],
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        controller: _scrollController,
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- SECTION 1: HERO (Large spacing, occupies most of screen) ---
-            SizedBox(
-              height: screenHeight - appBarHeight - 60,
-              child: _buildHeroSection(context),
-            ),
-
-            // Masssive spacing between "pages" to reduce clutter
-            const SizedBox(height: 160),
-
-            // --- SECTION 2: COLLECTIONS (Scroll Animated) ---
-            _buildAnimatedSection(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildCollectionHeader(),
-                  const SizedBox(height: 40),
-                  _buildHorizontalCollection(),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 180),
-
-            // --- SECTION 3: PHILOSOPHY (Scroll Animated) ---
-            _buildAnimatedSection(
-              child: Column(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 25),
-                    child: Divider(color: Colors.black12, thickness: 1),
-                  ),
-                   scrollTriggered(
-                    (visible) => _buildPhilosophySection(context, visible),
-                    'Philosophy',
-                  ),
-                ],
-              ),
-            ),
-
-            _buildAnimatedSection(
-              child: Column(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 25),
-                    child: Divider(color: Colors.black12, thickness: 1),
-                  ),
-                  // In your Column children:
-                  scrollTriggered(
-                    (visible) => _buildOurIngredients(context, visible),
-                    'desc-section',
-                  ),
-                ],
-              ),
-            ),
-            _buildAnimatedSection(
-              child: Column(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 25),
-                    child: Divider(color: Colors.black12, thickness: 1),
-                  ),
-                  // In your Column children:
-                  scrollTriggered(
-                    (visible) => _buildShopByCategory(context, visible),
-                    'desc-section',
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 120),
-          ],
         ),
       ),
     );
@@ -407,56 +368,59 @@ class _HomepageState extends State<Homepage> {
     );
   }
 
-Widget _buildPhilosophySection(BuildContext context, bool visible) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 60),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Label: Fades in first
-        Text(
-          "PHILOSOPHY",
-          style: GoogleFonts.inter(
-            letterSpacing: 4,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Colors.black38,
-          ),
-        ).animate(target: visible ? 1 : 0)
-         .fadeIn(duration: 600.ms)
-         .moveY(begin: 10, end: 0),
+  Widget _buildPhilosophySection(BuildContext context, bool visible) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 60),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Label: Fades in first
+          Text(
+                "PHILOSOPHY",
+                style: GoogleFonts.inter(
+                  letterSpacing: 4,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black38,
+                ),
+              )
+              .animate(target: visible ? 1 : 0)
+              .fadeIn(duration: 600.ms)
+              .moveY(begin: 10, end: 0),
 
-        const SizedBox(height: 25),
+          const SizedBox(height: 25),
 
-        // Title: Fades and slides up with a short delay
-        Text(
-          "Beauty in\nSimplicity",
-          style: GoogleFonts.tenorSans(
-            fontSize: 48,
-            height: 1.1,
-            color: Colors.black,
-          ),
-        ).animate(target: visible ? 1 : 0)
-         .fadeIn(delay: 200.ms, duration: 800.ms)
-         .moveY(begin: 20, end: 0),
+          // Title: Fades and slides up with a short delay
+          Text(
+                "Beauty in\nSimplicity",
+                style: GoogleFonts.tenorSans(
+                  fontSize: 48,
+                  height: 1.1,
+                  color: Colors.black,
+                ),
+              )
+              .animate(target: visible ? 1 : 0)
+              .fadeIn(delay: 200.ms, duration: 800.ms)
+              .moveX(begin: -20, end: 0),
 
-        const SizedBox(height: 30),
+          const SizedBox(height: 30),
 
-        // Body Text: Slowest fade for a smooth finish
-        Text(
-          "Every product is a testament to our commitment to excellence. From formulation to packaging, we believe in the power of minimalism to reveal true luxury.",
-          style: GoogleFonts.inter(
-            fontSize: 18,
-            color: Colors.black54,
-            height: 1.8,
-          ),
-        ).animate(target: visible ? 1 : 0)
-         .fadeIn(delay: 400.ms, duration: 1000.ms)
-         .moveY(begin: 20, end: 0),
-      ],
-    ),
-  );
-}
+          // Body Text: Slowest fade for a smooth finish
+          Text(
+                "Every product is a testament to our commitment to excellence. From formulation to packaging, we believe in the power of minimalism to reveal true luxury.",
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  color: Colors.black54,
+                  height: 1.8,
+                ),
+              )
+              .animate(target: visible ? 1 : 0)
+              .fadeIn(delay: 400.ms, duration: 1000.ms)
+              .moveX(begin: -20, end: 0),
+        ],
+      ),
+    );
+  }
 
   Widget _buildOurIngredients(BuildContext context, bool visible) {
     return Padding(
@@ -464,7 +428,6 @@ Widget _buildPhilosophySection(BuildContext context, bool visible) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Rounded Product Image
           ClipRRect(
                 borderRadius: BorderRadius.circular(15),
                 child: Image.network(
@@ -542,20 +505,22 @@ Widget _buildPhilosophySection(BuildContext context, bool visible) {
     );
   }
 
-  Widget _buildShopByCategory(BuildContext context, bool visible) {
-    final categories = [
-      {'name': 'Serums', 'count': '12 Products'},
-      {'name': 'Moisturizers', 'count': '8 Products'},
-      {'name': 'Cleansers', 'count': '6 Products'},
-      {'name': 'Masks', 'count': '5 Products'},
-    ];
+ Widget _buildShopByCategory(BuildContext context, bool visible) {
+  final categories = [
+    {'name': 'Serums', 'count': '12 Products', 'image': 'https://www.drsheths.com/cdn/shop/files/1_Website.jpg?v=1746015642'},
+    {'name': 'Moisturizers', 'count': '8 Products', 'image': 'https://vibrantskinbar.com/wp-content/uploads/what-is-moisturizer.jpg'},
+    {'name': 'Cleansers', 'count': '6 Products', 'image': 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?q=80&w=400'},
+    {'name': 'Masks', 'count': '5 Products', 'image': 'https://wowbeauty.co/wp-content/uploads/2023/10/face-mask-web.webp'},
+  ];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 40.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 40.0), 
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 25.0),
+          child: Text(
             "Shop by Category",
             style: GoogleFonts.tenorSans(
               fontSize: 32,
@@ -563,57 +528,212 @@ Widget _buildPhilosophySection(BuildContext context, bool visible) {
               color: Colors.black,
             ),
           ).animate(target: visible ? 1 : 0).fadeIn().slideX(begin: -0.1),
-          const SizedBox(height: 25),
-          GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 15,
-                  mainAxisSpacing: 15,
-                  childAspectRatio: 1.4, // Matches the rectangular card shape
+        ),
+        const SizedBox(height: 25),
+        SizedBox(
+          height: 180, 
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 25), 
+            itemCount: categories.length,
+            itemBuilder: (context, index) {
+              return Container(
+                width: 150, 
+                margin: const EdgeInsets.only(right: 15), 
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  image: DecorationImage(
+                    image: NetworkImage(categories[index]['image']!),
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      Colors.black.withOpacity(0.35), 
+                      BlendMode.darken,
+                    ),
+                  ),
                 ),
-                itemCount: categories.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0xFFF0F0F0),
-                      ), // Light border
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      categories[index]['name']!,
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          categories[index]['name']!,
-                          style: GoogleFonts.inter(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          categories[index]['count']!,
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: const Color(0xFF9BA4B5), // Muted blue-grey
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 2),
+                    Text(
+                      categories[index]['count']!,
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: Colors.white.withOpacity(0.8),
+                      ),
                     ),
-                  );
-                },
-              )
-              .animate(target: visible ? 1 : 0)
-              .fadeIn(delay: 200.ms)
-              .moveY(begin: 20),
+                  ],
+                ),
+              ).animate(target: visible ? 1 : 0)
+               .fadeIn(delay: (100 * index).ms)
+               .moveX(begin: 20, end: 0); // Subtle staggered slide-in
+            },
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+
+}
+
+class TopVerticalDrawer extends StatelessWidget {
+  final bool isOpen;
+  final VoidCallback onToggle;
+  final Widget child; 
+
+  const TopVerticalDrawer({
+    super.key,
+    required this.isOpen,
+    required this.onToggle,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    double screenHeight = MediaQuery.of(context).size.height;
+
+    return Stack(
+      children: [
+        // 1. MAIN CONTENT
+        Positioned.fill(
+          child: SafeArea(
+            child: Column(
+              children: [
+                _buildCustomHeader( context),
+                Expanded(child: child),
+              ],
+            ),
+          ),
+        ),
+
+        // 2. DIM OVERLAY
+        if (isOpen)
+          GestureDetector(
+            onTap: onToggle,
+            child: Container(
+              color: Colors.black.withOpacity(0.4),
+            ).animate().fadeIn(duration: 300.ms),
+          ),
+
+        // 3. THE TOP DRAWER
+        AnimatedPositioned(
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeOutQuart,
+          top: isOpen ? 0 : -(screenHeight * 0.5),
+          left: 0,
+          right: 0,
+          child: Container(
+            height: screenHeight * 0.5,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(40),
+                bottomRight: Radius.circular(40),
+              ),
+            ),
+            child: Column(
+              
+              children: [
+                const SizedBox(height: 130),
+                _drawerLink("HOME"),
+                _drawerLink("PRODUCTS"),
+                _drawerLink("SEARCH"),
+                _drawerLink("PROFILE"),
+                const Spacer(),
+                IconButton(
+                  onPressed: onToggle,
+                  icon: const Icon(Icons.keyboard_arrow_up, size: 30),
+                ),
+                const SizedBox(height: 10),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCustomHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: Icon(isOpen ? Icons.close : Icons.menu_open),
+            onPressed: onToggle, 
+          ),
+          Text(
+          'GLOW & FIT',
+          style: GoogleFonts.tenorSans(
+            textStyle: const TextStyle(
+              color: Colors.black,
+              fontSize: 22,
+              letterSpacing: 6,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ),
+          Padding(
+            padding: const EdgeInsets.only(right: 15),
+            child: IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CartPage()),
+                );
+              },
+              icon: Badge(
+                label: Text(
+                  // Calculates total quantity of all items in the cart
+                  globalCart
+                      .fold(0, (sum, item) => sum + item.quantity)
+                      .toString(),
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                ),
+                // Only show the badge if the cart is not empty
+                isLabelVisible: globalCart.isNotEmpty,
+                backgroundColor: Colors.redAccent, // Luxury black badge
+                child: const Icon(
+                  Icons.shopping_bag_outlined,
+                  color: Colors.black,
+                  size: 26,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _drawerLink(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 15),
+      child: Text(
+        title,
+        style: GoogleFonts.archivo(
+          fontSize: 25,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 3,
+           height: 1.5,
+          
+          
+        ),
+      ).animate(target: isOpen ? 1 : 0).fadeIn(delay: 200.ms).slideX(begin: 0.2),
     );
   }
 }
