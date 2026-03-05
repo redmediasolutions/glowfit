@@ -15,74 +15,66 @@ class ProductsList extends StatefulWidget {
   State<ProductsList> createState() => _ProductsListState();
 }
 
-class _ProductsListState extends State<ProductsList> {
  
+class _ProductsListState extends State<ProductsList> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      // Only one decoration for the entire card
       decoration: BoxDecoration(
-        color: const Color(0xFFF9F9F9), // Light neutral grey
-        borderRadius: BorderRadius.circular(35), // Large rounded corners
+        color: const Color(0xFFF9F9F9),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image Area
+          // 1. Image Area
           Expanded(
             flex: 6,
             child: Center(
               child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Container(
-                  margin: const EdgeInsets.all(20.0),
-                  decoration: BoxDecoration(
-                    image: widget.imageUrl != null
-                    ? DecorationImage(
-                        image: NetworkImage(widget.imageUrl!), // Use widget.imageUrl
-                        fit: BoxFit.contain,
+                padding: const EdgeInsets.all(12),
+                child: widget.imageUrl != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: Image.network(
+                          widget.imageUrl!,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        ),
                       )
-                    : null,
-                  ),
-                  child: widget.imageUrl == null 
-                  ? const Center(child: Icon(Icons.image_not_supported)) 
-                  : null,
-                )
+                    : const Icon(Icons.image_not_supported, color: Colors.grey),
               ),
             ),
           ),
-          
-          // Info Area
+
+          // 2. Info Area (No second Container/Stack)
           Expanded(
-            flex: 4,
+            flex: 4, // Adjusted flex slightly for better text balance
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center, // Centers text vertically
                 children: [
                   Text(
-                   widget.name,
+                    widget.name.toUpperCase(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
-                      color: Colors.grey[500],
-                      fontSize: 10,
+                      fontSize: 12,
+                      letterSpacing: 1.1,
                       fontWeight: FontWeight.w600,
-                      letterSpacing: 1.5,
+                      color: Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                   widget.name,
+                    "₹${widget.regularPrice?.toStringAsFixed(0) ?? '--'}",
                     style: GoogleFonts.inter(
                       fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                  "₹${widget.regularPrice?.toStringAsFixed(2) ?? '--'}",
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w700,
                       color: Colors.black,
                     ),
                   ),
@@ -90,8 +82,6 @@ class _ProductsListState extends State<ProductsList> {
               ),
             ),
           ),
-
-          
         ],
       ),
     );

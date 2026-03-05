@@ -1,3 +1,4 @@
+import 'package:beauty_app/components/galleryimage.dart';
 import 'package:beauty_app/models/cartitem.dart';
 import 'package:beauty_app/models/product_model.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +40,13 @@ class ProductsView extends StatefulWidget {
 }
 
 class _ProductsViewState extends State<ProductsView> {
+  String? selectedImage;
+
+  @override
+void initState() {
+  super.initState();
+  selectedImage = widget.product.image;
+}
 
   final List<CartItem> _cartItems = []; 
 void _addToCart() {
@@ -113,7 +121,7 @@ void _addToCart() {
 
         }, icon: Icon(Icons.arrow_back_ios)),
         title: Text(
-          'LUXĒ',
+        'GLOW & FIT',
           style: GoogleFonts.tenorSans(
             textStyle: const TextStyle(
               color: Colors.black,
@@ -177,28 +185,28 @@ floatingActionButton: Padding(
           children: [
             
             // --- SECTION 1: HERO (Large spacing, occupies most of screen) ---
-            SizedBox(
-              height: screenHeight - appBarHeight - 60,
-              child: _buildHeroSection(context, p),
-            ),
-            
+            _buildHeroSection(context, p),
+_buildgalleryimage(context, p),
+            const SizedBox(height: 10,),
+              _productdetails(context, p),
+            const SizedBox(height: 50,),
+
          scrollTriggered(_description(context, p), 'desc'),
-            const SizedBox(height: 100,),
-         scrollTriggered(_image(context), 'Image')   ,
-            const SizedBox(height: 100,),
-scrollTriggered(_keyfeaturs(context), 'Features')   ,
+            const SizedBox(height: 50,),
+           
+
+         scrollTriggered(_image(context,p), 'Image')   ,
+               
+            const SizedBox(height: 50,),
+scrollTriggered(_buildKeyIngredients(context,p), 'KeyIngredients')   ,
           
             const SizedBox(height: 100,),
-scrollTriggered(_buildImageSection(context), 'Imagesection')   ,
+scrollTriggered(_buildImageSection(context,p), 'Imagesection')   ,
           
-            
-            const SizedBox(height: 100,),
-scrollTriggered(_buildKeyIngredients(context), 'KeyIngredients')   ,
-
-
+      
             const SizedBox(height: 100,),
 
-            _buildUsageAndVolume(context),
+            _buildUsageAndVolume(context, p),
            
             const SizedBox(height: 150),
           ],
@@ -207,87 +215,205 @@ scrollTriggered(_buildKeyIngredients(context), 'KeyIngredients')   ,
     );
   }
 
-  Widget _buildHeroSection(BuildContext context,Productsmodel p) {
-    return Stack(
-      children: [
-        // Grey Block background for the image
-        Container(
-          height: double.infinity,
-          width: double.infinity,
-          margin: const EdgeInsets.only(bottom: 200),
-          color: const Color(0xFFF5F5F7),
-          child: Center(
-            child: Image.network(
-             p.image ?? 'https://via.placeholder.com/380',
-              height: 380,
-              fit: BoxFit.contain,
-            ).animate().fadeIn(duration: 1200.ms).moveY(begin: 20, end: 0),
-          ),
-        ),
+  Widget _buildHeroSection(BuildContext context, Productsmodel p) {
+  return Stack(
+    children: [
+      Container(
+        height: 600,
+        width: double.infinity,
+        color: const Color(0xFFF5F5F7),
+        child: Image.network(
+  selectedImage ?? p.image ?? 'https://via.placeholder.com/380',
+  fit: BoxFit.contain,
+).animate().fadeIn(duration: 1200.ms).moveY(begin: 20, end: 0),
+      ),
 
-        // Text Content anchored to the bottom of this section
-        Positioned(
-          bottom: 100,
-          left: 25,
-          right: 25,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-               p.name,
-                style: GoogleFonts.inter(
-                  letterSpacing: 3,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black45,
-                ),
+      Positioned(
+        bottom: 30,   
+        left: 25,
+        right: 25,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              p.categories,
+              style: GoogleFonts.inter(
+                letterSpacing: 3,
+                fontSize: 20,
+                fontWeight: FontWeight.w500,
+                color: Colors.black45,
               ),
-              const SizedBox(height: 15),
-              Text(
-                p.name,
-                style: GoogleFonts.tenorSans(
-                  fontSize: 58,
-                  height: 1.0,
-                  color: Colors.black,
-                ),
-              ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.1, end: 0),
-              const SizedBox(height: 25),
-              Text(
-                "₹ ${p.regularPrice}",
-                style: GoogleFonts.tenorSans(
-                  fontSize: 20,
-                  height: 1.0,
-                  color: Colors.black,
-                ),
-              ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.1, end: 0),
+            ),
+            const SizedBox(height: 15),
+            Text(
+              p.name,
+              style: GoogleFonts.tenorSans(
+                fontSize: 25,
+                height: 1.0,
+                color: Colors.black,
+              ),
+            ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.1, end: 0),
 
-              const SizedBox(height: 40),
-            ],
+            const SizedBox(height: 25),
+
+            Text(
+              "₹ ${p.salePrice}",
+              style: GoogleFonts.tenorSans(
+                fontSize: 20,
+                height: 1.0,
+                color: Colors.black,
+              ),
+            ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.1, end: 0),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+//=============Gallery Image=============================
+Widget _buildgalleryimage(BuildContext context, Productsmodel p) {
+  return Padding(
+    padding: const EdgeInsets.all(10),
+    child: SizedBox(
+      height: 100,
+      width: 500,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: p.galleryImages.length,
+        itemBuilder: (context, index) {
+           final image = p.galleryImages[index]; 
+          return Padding(
+            padding: const EdgeInsets.only(right: 10), 
+            child: GestureDetector(
+               onTap: () {
+                setState(() {
+                  selectedImage = image;
+                });
+              },
+              child: GalleryImage(
+                imageUrl: p.galleryImages[index],
+              ),
+            ),
+          );
+        },
+      ),
+    ),
+  );
+}
+
+ Widget _productdetails(BuildContext context, Productsmodel p) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 15,vertical: 5),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+       
+       
+        Row(
+          spacing: 10,
+          children: [
+              Text(
+                   'Composition : -',
+              textAlign: TextAlign.left, // Added for better centering
+          style: GoogleFonts.tenorSans(
+            fontSize: 20,
+           
+            color: Colors.black,
+          )
+        ),
+           Expanded(
+  child: Text(
+    p.composition ?? '',
+    softWrap: true,
+    textAlign: TextAlign.justify,
+    style: GoogleFonts.inter(
+      fontSize: 17,
+      height: 1.5,
+      color: Colors.grey[600],
+    ),
+  ),
+)
+           
+          ],
+        ),
+        const SizedBox(height: 25,),
+        Row(
+          spacing: 10,
+          children: [
+              Text(
+                   'Package : -',
+              textAlign: TextAlign.left, 
+          style: GoogleFonts.tenorSans(
+            fontSize: 20,
+           
+            color: Colors.black,
+          )
+        )  ,Text(
+      p.packagesize ?? '',
+          textAlign: TextAlign.justify, // Ensures the block is centered
+          style: GoogleFonts.inter(
+            fontSize: 16, 
+            height: 1.5, // Improved readability
+            color: Colors.black45,
           ),
         ),
+           
+          ],
+        ),
+       const SizedBox(height: 25,),
+        Row(
+          spacing: 10,
+          children: [
+              Text(
+                   'Brand Name : -',
+              textAlign: TextAlign.left, 
+          style: GoogleFonts.tenorSans(
+            fontSize: 20,
+           
+            color: Colors.black,
+          )
+        )  , Text(
+                   p.manufactured ?? '',
+              textAlign: TextAlign.justify, 
+              style: GoogleFonts.inter(
+                fontSize: 16, 
+                height: 1.5,
+                color: Colors.black45,
+              ),
+            ),
+           
+          ],
+        ),
+        
+        
+        
+     
+      
       ],
-    );
-  }
+    ),
+  );
+}
 
  Widget _description(BuildContext context, Productsmodel p) {
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 25),
     child: Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Luminous skin.\nRedefined.",
-          textAlign: TextAlign.center, // Added for better centering
+     'DESCRIPTION',
+          textAlign: TextAlign.left, // Added for better centering
           style: GoogleFonts.tenorSans(
-            fontSize: 48,
+            fontSize: 20,
             height: 1.1,
             color: Colors.black,
           )
         ),
         const SizedBox(height: 20),
         Text(
-          "A transformative serum that delivers\nunparalleled radiance and clarity. Our\nsignature formula combines cutting-edge\ntechnology with nature's most powerful\ningredients.",
-          textAlign: TextAlign.center, // Ensures the block is centered
+       p.description.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ''),
+          textAlign: TextAlign.justify, // Ensures the block is centered
           style: GoogleFonts.inter(
             fontSize: 16, 
             height: 1.5, // Improved readability
@@ -298,13 +424,13 @@ scrollTriggered(_buildKeyIngredients(context), 'KeyIngredients')   ,
     ),
   );
 }
-  Widget _image(BuildContext context) {
+  Widget _image(BuildContext context, Productsmodel p) {
   return Container(
     // Removed height: double.infinity and margin
     padding: const EdgeInsets.symmetric(vertical: 40), // Controlled spacing
     child: Center(
       child: Image.network(
-        'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000&auto=format&fit=crop',
+        p.image ?? 'https://via.placeholder.com/380',
         height: 380,
         fit: BoxFit.contain,
       ).animate().fadeIn(duration: 1200.ms).moveY(begin: 20, end: 0),
@@ -312,277 +438,177 @@ scrollTriggered(_buildKeyIngredients(context), 'KeyIngredients')   ,
   );
 }
 
-  Widget _keyfeaturs(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25),
-      child: Column(
-        spacing: 10,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            "Key Features",
-              style: GoogleFonts.inter(
-                  letterSpacing: 3,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black45,
-                ),
-          ),
-          const SizedBox(height: 25),
-          Center(
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Column(
-                       spacing: 10,
-                      children: [
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundColor: Color(0xFFF5f4f4),
-                          foregroundColor: Colors.black45,
-                          child: Text(
-                            '1',
-                            style: GoogleFonts.inter(
-                              fontSize: 20,
-                              color: Colors.black,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ).animate().fadeIn(duration: 1200.ms).moveY(begin: 20, end: 0),
-                        Text('pH - balancing', style: GoogleFonts.inter(
-                              fontSize: 15,
-                              color: Colors.black,
-                              fontWeight: FontWeight.w500,
-                            ),),
-                      ],
-                    ),
-                    Column(
-                       spacing: 10,
-                      children: [
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundColor: Color(0xFFF5F5F7),
-                          foregroundColor: Colors.black,
-                          child: Text(
-                            '2',
-                            style: GoogleFonts.inter(
-                              fontSize: 20,
-                              color: Colors.black,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ).animate().fadeIn(duration: 1300.ms).moveY(begin: 20, end: 0),
-                        Text('Alcohol - free',style: GoogleFonts.inter(
-                              fontSize: 15,
-                              color: Colors.black,
-                              fontWeight: FontWeight.w500,
-                            ),),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 25),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Column(
-                       spacing: 10,
-                      children: [
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundColor: Color(0xFFF5f4f4),
-                          foregroundColor: Colors.black45,
-                          child: Text(
-                            '3',
-                            style: GoogleFonts.inter(
-                              fontSize: 20,
-                              color: Colors.black,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ).animate().fadeIn(duration: 1500.ms).moveY(begin: 20, end: 0),
-                        Text('Gentle exfoliation',style: GoogleFonts.inter(
-                              fontSize: 15,
-                              color: Colors.black,
-                              fontWeight: FontWeight.w500,
-                            ),),
-                      ],
-                    ),
-                    Column(
-                      spacing: 10,
-                      children: [
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundColor: Color(0xFFF5F5F7),
-                          foregroundColor: Colors.black,
-                          child: Text(
-                            '4',
-                            style: GoogleFonts.inter(
-                              fontSize: 20,
-                              color: Colors.black,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ).animate().fadeIn(duration: 1700.ms).moveY(begin: 20, end: 0),
-                        Text('Suitable for all skin\n types',style: GoogleFonts.inter(
-                              fontSize: 15,
-                              color: Colors.black,
-                              fontWeight: FontWeight.w500,
-                            ),),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+  // 1. KEY INGREDIENTS SECTION
+  Widget _buildKeyIngredients(BuildContext context, Productsmodel p) {
+  // 1. Check if the content is null or just empty whitespace
+  final String content = p.sideeeffects?.trim() ?? '';
+
+  // 2. If no content exists, return an empty box (deletes the white space)
+  if (content.isEmpty) {
+    return const SizedBox.shrink();
   }
 
-   Widget _buildImageSection(BuildContext context) {
-  // Define a set height for the hero section (e.g., 80% of screen height)
+  // 3. If you have multiple side effects separated by commas or newlines, 
+  // you can split them into a list. Otherwise, keep it as a single-item list.
+  final List<String> ingredients = [content];
+
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20.0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'SIDE EFFECTS',
+          style: GoogleFonts.inter(
+              fontSize: 15,
+              letterSpacing: 4.0,
+              color: Colors.blueGrey,
+            ),
+        ),
+        const SizedBox(height: 10),
+        // Map the list to widgets
+        ...ingredients.map((item) => Column(
+              children: [
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  // Using a smaller, cleaner bullet point
+                  leading: const Padding(
+                    padding: EdgeInsets.only(top: 8.0),
+                    child: Icon(Icons.circle, size: 6, color: Colors.black),
+                  ),
+                  title: Text(
+                    item,
+                    style: GoogleFonts.inter(
+                       fontSize: 15,
+                      fontWeight: FontWeight.w400,
+                      height: 1.4, // Better line height for readability
+                    ),
+                  ),
+                ),
+                const Divider(thickness: 0.5, color: Color(0xFFEEEEEE)),
+              ],
+            )),
+      ],
+    ),
+  );
+}
+
+  Widget _buildImageSection(BuildContext context, Productsmodel p) {
   final double sectionHeight = MediaQuery.of(context).size.height * 0.8;
 
   return SizedBox(
-    height: sectionHeight, // Constraints the Stack height
+    height: sectionHeight,
     width: double.infinity,
     child: Stack(
       children: [
-        // 1. Background and Image
-        Container(
-          width: double.infinity,
-          height: sectionHeight,
-          color: Colors.black,
-          child: Center(
+      
+        Positioned.fill(
+          child: Container(
+            color: Colors.black, 
             child: Image.network(
-              'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000&auto=format&fit=crop',
-              height: sectionHeight * 1.0, // Relative height for the bottle
-              fit: BoxFit.cover,
-            ).animate().fadeIn(duration: 1200.ms).moveY(begin: 20, end: 0),
+              p.image ?? 'https://via.placeholder.com/380',
+              fit: BoxFit.cover, 
+            ).animate().fadeIn(duration: 1200.ms),
           ),
         ),
 
-        // 2. Text Content (Anchored to the bottom)
+     
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0.6, 1.0], 
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withOpacity(0.1), 
+                ],
+              ),
+            ),
+          ),
+        ),
+
+       
         Positioned(
-          bottom: 60, // Adjusted for a cleaner look
-          left: 25,
-          right: 25,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "SKIN CARE",
-                style: GoogleFonts.inter(
-                  letterSpacing: 4, // Increased for luxury feel
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.amber,
-                ),
-              ).animate().fadeIn(duration: 1200.ms).moveY(begin: 20, end: 0),
-              const SizedBox(height: 12),
-              Text(
-                "Radiance\nSerum",
-                style: GoogleFonts.tenorSans(
-                  fontSize: 42,
-                  height: 1.1,
-                  color: Colors.amber,
-                ),
-              ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.1, end: 0),
-              const SizedBox(height: 20),
-              Text(
-                "\$245.00",
-                style: GoogleFonts.tenorSans(
-                  fontSize: 22,
-                  color: Colors.amber,
-                ),
-              ).animate().fadeIn(delay: 500.ms).moveY(begin: 10, end: 0),
-            ],
+          bottom: 50, 
+          left: 30,
+          right: 30,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 40),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.5), 
+             
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  p.name.toUpperCase(),
+                  style: GoogleFonts.inter(
+                    letterSpacing: 4,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.tealAccent,
+                  ),
+                ).animate().fadeIn(duration: 800.ms).moveY(begin: 10, end: 0),
+               
+                const SizedBox(height: 15),
+                Text(
+                  "₹ ${p.salePrice}",
+                  style: GoogleFonts.tenorSans(
+                    fontSize: 24,
+                    color: Colors.tealAccent,
+                  ),
+                ).animate().fadeIn(delay: 400.ms),
+              ],
+            ),
           ),
         ),
       ],
     ),
   );
 }
-// 1. KEY INGREDIENTS SECTION
-  Widget _buildKeyIngredients(BuildContext context) {
-    final List<String> ingredients = [
-      'Vitamin C',
-      'Hyaluronic Acid',
-      'Niacinamide',
-      'Peptide Complex',
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'KEY INGREDIENTS',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              letterSpacing: 4.0,
-              color: Colors.grey[500],
-            ),
-          ),
-          const SizedBox(height: 10),
-          ...ingredients.map((item) => Column(
-                children: [
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.circle, size: 8, color: Colors.black),
-                    title: Text(
-                      item,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
-                    ),
-                  ),
-                  const Divider(thickness: 0.5, color: Color(0xFFEEEEEE)),
-                ],
-              )),
-        ],
-      ),
-    );
-  }
 
   // 2. HOW TO USE & VOLUME SECTION
-  Widget _buildUsageAndVolume(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+  Widget _buildUsageAndVolume(BuildContext context, Productsmodel p) {
+  // 1. Clean the content and check if it exists
+  final String workingContent = p.working?.trim() ?? '';
+  final bool hasWorkingContent = workingContent.isNotEmpty;
+
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20.0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 2. Conditional "How It Works" Section
+        if (hasWorkingContent) ...[
           Text(
-            'HOW TO USE',
+            'HOW DOES IT WORK',
             style: GoogleFonts.inter(
-              fontSize: 12,
+              fontSize: 15,
               letterSpacing: 4.0,
-              color: Colors.grey[500],
+              color: Colors.blueGrey,
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Apply 2-3 drops to clean skin morning and evening. Follow with moisturizer.',
-            style: TextStyle(fontSize: 18, height: 1.5),
+          Text(
+            workingContent,
+            style: GoogleFonts.inter(
+              fontSize: 16, // Reduced slightly for better body text feel
+              height: 1.6,
+              color: Colors.black87,
+            ),
           ),
-          const SizedBox(height: 40),
-          const Divider(thickness: 0.5, color: Color(0xFFEEEEEE)),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Volume', style: TextStyle(color: Colors.grey[600], fontSize: 16)),
-              const Text(
-                '30ml / 1.0 fl oz',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-              ),
-            ],
-          ),
+          const SizedBox(height: 30),
         ],
-      ),
-    );
-  }
+
+        // 3. Static Volume Section (Always shows unless you make it dynamic)
+        const Divider(thickness: 0.5, color: Color(0xFFEEEEEE)),
+        const SizedBox(height: 20),
+      
+      ],
+    ),
+  );
+}
 }

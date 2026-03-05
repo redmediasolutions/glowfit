@@ -4,7 +4,6 @@ import 'package:beauty_app/components/secondaryscaffold.dart';
 import 'package:beauty_app/models/product_model.dart';
 import 'package:beauty_app/services/api.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -17,13 +16,53 @@ class Searchpage extends StatefulWidget {
 }
 
 class _SearchpageState extends State<Searchpage> {
-   late Future<List<Productsmodel>> _productsFuture;
+  late Future<List<Productsmodel>> _productsFuture;
+  int? _currentCategoryId;
+  // Track the current search and category
+  String _searchQuery = "";
+  int? _selectedCategoryId; 
 
-    @override
+ @override
   void initState() {
     super.initState();
-    _productsFuture = APIService.fetchAllProducts();
+    _fetchFilteredProducts();
   }
+  // Helper to trigger the API fetch with current filters
+  void _loadProducts() {
+    setState(() {
+      _productsFuture = APIService.fetchProducts(
+     
+        // search: _searchQuery, // Ensure your APIService supports a 'search' param
+        categoryId: _selectedCategoryId,
+      );
+    });
+  }
+
+
+  // This function handles the API refresh logic
+  void _fetchFilteredProducts({int? categoryId}) {
+    setState(() {
+      _currentCategoryId = categoryId;
+      // We pass the categoryId to your existing API service
+      _productsFuture = APIService.fetchProducts(
+        categoryId: _currentCategoryId,
+       
+      );
+    });
+  }
+  // This will be called by the Category Chips
+  void _performSearch(String query) {
+  setState(() {
+  
+    _productsFuture = APIService.fetchProducts(
+     search: query, 
+      categoryId: _selectedCategoryId, 
+   
+    );
+  });
+}
+  // This will be called by the Search Field
+  
   @override
   Widget build(BuildContext context) {
     return Secondaryscaffold(
@@ -47,12 +86,18 @@ class _SearchpageState extends State<Searchpage> {
                 ),
               ),
               const SizedBox(height: 30),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 25.0),
-                child: SearchField(), // Updated search component
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                child: SearchField(
+                  onSearchChanged: (query) => _performSearch(query),
+                ), // Updated search component
               ),
               const SizedBox(height: 35),
-              const ActionChoiceExample(), // The Category chips
+              ActionChoiceExample(
+                onCategorySelected: (id) {
+                _fetchFilteredProducts(categoryId: id);
+              },
+              ), // The Category chips
               const SizedBox(height: 40),
               
               // Results counter
@@ -115,7 +160,7 @@ class _SearchpageState extends State<Searchpage> {
         final p = products[index];
 
         return GestureDetector(
-          onTap: () => context.go('/productview'),
+          onTap: () => context.push('/productview', extra: p),
           child: ProductsList(
             id: p.id.toString(),
             name: p.name,
@@ -144,7 +189,10 @@ class _SearchpageState extends State<Searchpage> {
 
 
 class ActionChoiceExample extends StatefulWidget {
-  const ActionChoiceExample({super.key});
+  // Add this callback to communicate with the SearchPage
+  final Function(int? categoryId) onCategorySelected;
+  
+  const ActionChoiceExample({super.key, required this.onCategorySelected});
 
   @override
   State<ActionChoiceExample> createState() => _ActionChoiceExampleState();
@@ -153,12 +201,13 @@ class ActionChoiceExample extends StatefulWidget {
 class _ActionChoiceExampleState extends State<ActionChoiceExample> {
   int? _value = 0;
 
-  final List<String> categories = [
-    'All',
-    'Skincare',
-    'Makeup',
-    'Serums',
-    'Haircare',
+  // IMPORTANT: Map your names to your actual Backend Category IDs
+  final List<Map<String, dynamic>> categories = [
+    {'name': 'All', 'id': null},
+    {'name': 'Products', 'id': 17}, 
+    {'name': 'HomePage', 'id': 19},
+    {'name': 'Serums', 'id': 20},
+    {'name': 'Haircare', 'id': 22},
   ];
 
   @override
@@ -166,52 +215,38 @@ class _ActionChoiceExampleState extends State<ActionChoiceExample> {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
-      // Add padding to the start so the first item isn't touching the screen edge
       padding: const EdgeInsets.symmetric(horizontal: 20), 
       child: Row(
         children: categories.asMap().entries.map((entry) {
           int index = entry.key;
-          String name = entry.value;
+          String name = entry.value['name'];
+          int? catId = entry.value['id'];
 
           return Padding(
             padding: const EdgeInsets.only(right: 12.0),
             child: ChoiceChip(
-              // 1. Convert to Uppercase to match the screenshot
               label: Text(name.toUpperCase()), 
               selected: _value == index,
               showCheckmark: false,
-
-              // 2. Exact Typography Match
               labelStyle: GoogleFonts.montserrat(
                 fontSize: 12,
-                letterSpacing: 1.5, // Essential for that luxury look
+                letterSpacing: 1.5,
                 fontWeight: FontWeight.w600,
                 color: _value == index ? Colors.white : Colors.black,
               ),
-
-              // 3. Match Screenshot Colors
               selectedColor: Colors.black,
-              // This is the neutral grey seen in your image
               backgroundColor: const Color(0xFFEBEBEB), 
-
-              // 4. Sharp Corners (Zero Radius)
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.zero,
                 side: BorderSide.none,
               ),
-
-              // 5. Box Proportions
-              // Increased horizontal padding makes the boxes wider
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              
-              // Remove default Material behavior that adds extra padding
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: VisualDensity.compact,
-
               onSelected: (bool selected) {
                 setState(() {
                   _value = selected ? index : null;
                 });
+              
+                widget.onCategorySelected(selected ? catId : null);
               },
             ),
           );
@@ -219,4 +254,5 @@ class _ActionChoiceExampleState extends State<ActionChoiceExample> {
       ),
     );
   }
+
 }

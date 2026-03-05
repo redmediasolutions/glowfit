@@ -58,9 +58,13 @@ GoRoute(
           redirect: (_, _) => '/home',
         ),
          GoRoute(
-          path: '/home',
-           builder: (context, state) => Homepage(),
-        ),
+  path: '/home',
+  builder: (context, state) {
+    // Extract the categoryId if passed via 'extra'
+    final categoryId = state.extra as int?; 
+    return Homepage(categoryId: categoryId.toString());
+  },
+),
           GoRoute(
           path: '/AllProducts',
            builder: (context, state) => AllProducts(),

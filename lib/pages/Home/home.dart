@@ -1,5 +1,8 @@
+import 'package:beauty_app/components/products_List.dart';
 import 'package:beauty_app/models/cartitem.dart';
+import 'package:beauty_app/models/product_model.dart';
 import 'package:beauty_app/pages/cart/cart_Page.dart';
+import 'package:beauty_app/services/api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -7,7 +10,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 class Homepage extends StatefulWidget {
-  const Homepage({super.key});
+  final String categoryId; 
+  const Homepage({super.key, required this.categoryId});
 
   @override
   State<Homepage> createState() => _HomepageState();
@@ -27,7 +31,7 @@ bool _isMenuOpen = false;
   Widget _buildAnimatedSection({required Widget child}) {
     return child
         .animate(
-          // Pass the controller to fix the '1 positional argument expected' error
+       
           adapter: ScrollAdapter(_scrollController),
         )
         .fadeIn(duration: 800.ms, curve: Curves.easeOut)
@@ -81,7 +85,7 @@ bool _isMenuOpen = false;
               // --- SECTION 2: COLLECTIONS (Scroll Animated) ---
               _buildCollectionHeader(),
         
-              _buildHorizontalCollection(),
+              _buildHorizontalCollection(categoryId: "19"),
         
               const SizedBox(height: 160),
         
@@ -206,7 +210,7 @@ bool _isMenuOpen = false;
               const SizedBox(height: 40),
               TextButton(
                 onPressed: () {
-                  context.go('/productview');
+                  context.go('/AllProducts');
                 },
                 style: TextButton.styleFrom(
                   backgroundColor: Colors.black,
@@ -270,100 +274,103 @@ bool _isMenuOpen = false;
     );
   }
 
-  Widget _buildHorizontalCollection() {
+  Widget _buildHorizontalCollection({required String categoryId}) {
+   
     return SizedBox(
       height: 520,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.only(left: 25),
-        itemCount: 3,
-        itemBuilder: (context, index) {
-          return Container(
-            width: 320,
-            margin: const EdgeInsets.only(right: 25),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFAFAFA),
-              borderRadius: BorderRadius.circular(45),
+      child: FutureBuilder<List<Productsmodel>>(
+        future: APIService.fetchProductsByCategory(categoryId: categoryId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const _LoadingList();
+          }
+
+          if (snapshot.hasError) {
+            return const Center(
+              child: Text(
+                'Failed to load products',
+                style: TextStyle(color: Colors.white),
+              ),
+            );
+          }
+
+          final products = snapshot.data ?? [];
+
+          if (products.isEmpty) {
+            return const Center(
+              child: Text(
+                'No products found',
+                style: TextStyle(color: Colors.white),
+              ),
+            );
+          }
+        return ListView.builder(
+          shrinkWrap: true,
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.only(left: 10),
+           itemCount: products.length,
+          itemBuilder: (context, index) {
+            final product = products[index];
+            return GestureDetector(
+              onTap: () => context.push('/productview', extra: product),
+              child: Container(
+                width: 320,
+              
+                margin: const EdgeInsets.only(right: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFAFAFA),
+                  borderRadius: BorderRadius.circular(45),
+                ),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                   Padding(
+            padding: const EdgeInsets.all(30.0),
+            child: ProductsList(
+              id: product.id.toString(),
+              name: product.name,
+              imageUrl: product.image,
+              regularPrice: product.regularPrice,
+              onAddToCart: () => print("Added ${product.name}"),
             ),
-            child: Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(30.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Center(
-                          child: Image.network(
-                            'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000&auto=format&fit=crop',
-                            fit: BoxFit.contain,
+          ),
+                    Positioned(
+                      top: 25,
+                      right: 25,
+                      child: Container(
+                        height: 50,
+                        width: 50,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 10,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          onPressed: () {
+                           context.push('/productview', extra: product);
+                          },
+                          icon: Icon(
+                            Icons.arrow_forward_ios_outlined,
+                            size: 16,
+                            color: Colors.black,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 25),
-                      Text(
-                        "SKINCARE",
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          letterSpacing: 2,
-                          color: Colors.black38,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        "Radiance Serum",
-                        style: GoogleFonts.tenorSans(
-                          fontSize: 26,
-                          color: Colors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 15),
-                      const Text(
-                        "₹ 245",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  top: 25,
-                  right: 25,
-                  child: Container(
-                    height: 50,
-                    width: 50,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 10,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
                     ),
-                    child: IconButton(
-                      onPressed: () {
-                        context.go('/AllProducts');
-                      },
-                      icon: Icon(
-                        Icons.arrow_forward_ios_outlined,
-                        size: 16,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          );
-        },
+              ),
+            );
+          },
+        );
+        }
       ),
     );
   }
@@ -734,6 +741,28 @@ class TopVerticalDrawer extends StatelessWidget {
           
         ),
       ).animate(target: isOpen ? 1 : 0).fadeIn(delay: 200.ms).slideX(begin: 0.2),
+    );
+  }
+}
+class _LoadingList extends StatelessWidget {
+  const _LoadingList();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      scrollDirection: Axis.horizontal,
+      itemCount: 4,
+      separatorBuilder: (_, __) => const SizedBox(width: 12),
+      itemBuilder: (_, __) {
+        return Container(
+          width: 200,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade800,
+            borderRadius: BorderRadius.circular(10),
+          ),
+        );
+      },
     );
   }
 }
