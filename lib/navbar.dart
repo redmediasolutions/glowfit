@@ -23,24 +23,20 @@ class AppRouter {
       FirebaseAuth.instance.authStateChanges(),
     ),
     // Pointing to your Authcheck logic
-    redirect: (context, state) {
-    final user = FirebaseAuth.instance.currentUser;
-  final bool loggingIn = state.matchedLocation == '/login';
-
-  // If Firebase is still initializing, we might get a null user incorrectly.
-  // Add a print here to see what's happening in your debug console:
-  debugPrint("Router Redirect: User: ${user?.uid}, Location: ${state.matchedLocation}");
+   redirect: (context, state) {
+  final user = FirebaseAuth.instance.currentUser;
+  final loggingIn = state.matchedLocation == '/login';
 
   if (user == null) {
     return loggingIn ? null : '/login';
   }
 
-  // If logged in but on login page, go home
-  if (loggingIn) {
+  if (user != null && loggingIn) {
     return '/home';
   }
 
   return null;
+
     },
     routes: [
       // OUTSIDE the Shell (No bottom nav here)

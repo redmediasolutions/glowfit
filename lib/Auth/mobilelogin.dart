@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:glowfit/Auth/sign-up.dart';
 import 'package:glowfit/pages/Home/home.dart';
 
-
+final String? categoryId = "0"; // Default category ID, can be updated as needed
 
 class EmailLoginPage extends StatefulWidget {
+  
   const EmailLoginPage({super.key});
 
   @override
@@ -13,6 +14,7 @@ class EmailLoginPage extends StatefulWidget {
 }
 
 class _EmailLoginPageState extends State<EmailLoginPage> {
+  
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool _isLoading = false;
@@ -48,7 +50,7 @@ class _EmailLoginPageState extends State<EmailLoginPage> {
       if (mounted) {
         Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => Homepage(categoryId: '',)));
+            MaterialPageRoute(builder: (context) => Homepage(categoryId: categoryId?.toString() ?? "0",)));
       }
       debugPrint("Login Successful");
     } on FirebaseAuthException catch (e) {
