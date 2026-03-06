@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:glowfit/Auth/mobilelogin.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class Profile extends StatelessWidget {
@@ -75,7 +77,10 @@ class Profile extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                     // context.push('/login'); 
+                      Navigator.push(context,MaterialPageRoute(builder: (context)=>EmailLoginPage()) );
+                    },
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 20),
                       side: const BorderSide(color: Color(0xFFEEEEEE)),

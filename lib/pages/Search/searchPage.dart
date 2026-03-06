@@ -19,7 +19,7 @@ class _SearchpageState extends State<Searchpage> {
   late Future<List<Productsmodel>> _productsFuture;
   int? _currentCategoryId;
   // Track the current search and category
-  String _searchQuery = "";
+  final String _searchQuery = "";
   int? _selectedCategoryId; 
 
  @override
