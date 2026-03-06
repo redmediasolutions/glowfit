@@ -1,4 +1,4 @@
-import 'package:beauty_app/navbar.dart'; // Ensure this contains your appRouter
+import 'package:glowfit/navbar.dart'; // Ensure this contains your appRouter
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 

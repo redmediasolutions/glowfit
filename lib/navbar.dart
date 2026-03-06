@@ -1,11 +1,11 @@
 import 'dart:async';
-import 'package:beauty_app/models/product_model.dart';
-import 'package:beauty_app/pages/AllProducts/Products_view.dart';
-import 'package:beauty_app/pages/AllProducts/all_products.dart';
-import 'package:beauty_app/pages/Home/home.dart';
-import 'package:beauty_app/pages/Search/searchPage.dart';
-import 'package:beauty_app/pages/profile/profile.dart';
-import 'package:beauty_app/shell.dart';
+import 'package:glowfit/models/product_model.dart';
+import 'package:glowfit/pages/AllProducts/Products_view.dart';
+import 'package:glowfit/pages/AllProducts/all_products.dart';
+import 'package:glowfit/pages/Home/home.dart';
+import 'package:glowfit/pages/Search/searchPage.dart';
+import 'package:glowfit/pages/profile/profile.dart';
+import 'package:glowfit/shell.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 

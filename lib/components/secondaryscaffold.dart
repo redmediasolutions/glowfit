@@ -1,5 +1,5 @@
-import 'package:beauty_app/models/cartitem.dart';
-import 'package:beauty_app/pages/cart/cart_Page.dart' hide globalCart;
+import 'package:glowfit/models/cartitem.dart';
+import 'package:glowfit/pages/cart/cart_Page.dart' hide globalCart;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 

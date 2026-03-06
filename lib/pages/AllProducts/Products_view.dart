@@ -1,6 +1,6 @@
-import 'package:beauty_app/components/galleryimage.dart';
-import 'package:beauty_app/models/cartitem.dart';
-import 'package:beauty_app/models/product_model.dart';
+import 'package:glowfit/components/galleryimage.dart';
+import 'package:glowfit/models/cartitem.dart';
+import 'package:glowfit/models/product_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';

@@ -1,8 +1,8 @@
-import 'package:beauty_app/components/products_List.dart';
-import 'package:beauty_app/components/search.dart';
-import 'package:beauty_app/components/secondaryscaffold.dart';
-import 'package:beauty_app/models/product_model.dart';
-import 'package:beauty_app/services/api.dart';
+import 'package:glowfit/components/products_List.dart';
+import 'package:glowfit/components/search.dart';
+import 'package:glowfit/components/secondaryscaffold.dart';
+import 'package:glowfit/models/product_model.dart';
+import 'package:glowfit/services/api.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';

@@ -1,5 +1,5 @@
-import 'package:beauty_app/models/cartitem.dart';
-import 'package:beauty_app/models/product_model.dart';
+import 'package:glowfit/models/cartitem.dart';
+import 'package:glowfit/models/product_model.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';

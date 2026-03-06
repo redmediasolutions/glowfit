@@ -1,4 +1,4 @@
-import 'package:beauty_app/components/Floating_Navbar.dart';
+import 'package:glowfit/components/Floating_Navbar.dart';
 import 'package:flutter/material.dart';
 
 class ShellPage extends StatelessWidget {
