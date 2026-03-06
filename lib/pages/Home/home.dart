@@ -1,7 +1,7 @@
 import 'package:beauty_app/components/products_List.dart';
 import 'package:beauty_app/models/cartitem.dart';
 import 'package:beauty_app/models/product_model.dart';
-import 'package:beauty_app/pages/cart/cart_Page.dart';
+import 'package:beauty_app/pages/cart/cart_Page.dart' hide globalCart;
 import 'package:beauty_app/services/api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -328,6 +328,7 @@ bool _isMenuOpen = false;
                    Padding(
             padding: const EdgeInsets.all(30.0),
             child: ProductsList(
+              product: product,
               id: product.id.toString(),
               name: product.name,
               imageUrl: product.image,

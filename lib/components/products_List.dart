@@ -1,22 +1,59 @@
+import 'package:beauty_app/models/cartitem.dart';
+import 'package:beauty_app/models/product_model.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+final List<CartItem> _cartItems = [];
+
 class ProductsList extends StatefulWidget {
-   final String? id;
+  final String? id;
   final String? imageUrl;
   final String name;
   final double? regularPrice;
-   final VoidCallback? onAddToCart;
-  
-  const ProductsList({super.key, this.id, this.imageUrl, 
-  required this.name, this.regularPrice, this.onAddToCart});
+  final VoidCallback? onAddToCart;
+  final Productsmodel product;
+  const ProductsList({
+    super.key,
+    this.id,
+    this.imageUrl,
+    required this.name,
+    this.regularPrice,
+    this.onAddToCart,
+   required this.product,
+  });
 
   @override
   State<ProductsList> createState() => _ProductsListState();
 }
 
- 
 class _ProductsListState extends State<ProductsList> {
+  //==================ADD TO CART==========================
+
+  void _addToCart() {
+    setState(() {
+      // We search the GLOBAL list now
+      int index = globalCart.indexWhere(
+        (item) => item.name == widget.product.name,
+      );
+
+      if (index != -1) {
+        globalCart[index].quantity++;
+      } else {
+        globalCart.add(
+          CartItem(
+            name: widget.product.name,
+            price: "₹ ${widget.product.regularPrice}",
+            imageUrl: widget.product.image ?? '',
+          
+          ),
+        );
+      }
+    });
+
+    print("Global Cart size: ${globalCart.length}");
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -51,12 +88,13 @@ class _ProductsListState extends State<ProductsList> {
 
           // 2. Info Area (No second Container/Stack)
           Expanded(
-            flex: 4, // Adjusted flex slightly for better text balance
+            flex: 4,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center, // Centers text vertically
+                mainAxisAlignment:
+                    MainAxisAlignment.center, // Centers text vertically
                 children: [
                   Text(
                     widget.name.toUpperCase(),
@@ -70,13 +108,33 @@ class _ProductsListState extends State<ProductsList> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    "₹${widget.regularPrice?.toStringAsFixed(0) ?? '--'}",
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "₹${widget.regularPrice?.toStringAsFixed(0) ?? '--'}",
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                        ),
+                      ),
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.amber,
+                        child: IconButton(
+                          onPressed: () {
+                            _addToCart();
+                            print(
+                              "DEBUG: Items in cart now: ${_cartItems.length}",
+                            );
+                          },
+                          icon: Icon(Icons.add),
+                          color: Colors.black,
+                          iconSize: 20,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

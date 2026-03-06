@@ -62,7 +62,7 @@ void _addToCart() {
         name: widget.product.name,
             price: "₹ ${widget.product.regularPrice}",
             imageUrl: widget.product.image ?? '', 
-            image: '',
+           
         ),
       );
     }

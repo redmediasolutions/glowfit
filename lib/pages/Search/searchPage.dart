@@ -166,6 +166,7 @@ class _SearchpageState extends State<Searchpage> {
             name: p.name,
             imageUrl: p.image,
             regularPrice: p.regularPrice,
+            product: p,
             onAddToCart: () {
               print("Added ${p.name} to cart");
             },
@@ -189,11 +190,8 @@ class _SearchpageState extends State<Searchpage> {
 
 
 class ActionChoiceExample extends StatefulWidget {
-  // Add this callback to communicate with the SearchPage
-  final Function(int? categoryId) onCategorySelected;
-  
+  final Function(int? categoryId) onCategorySelected;  
   const ActionChoiceExample({super.key, required this.onCategorySelected});
-
   @override
   State<ActionChoiceExample> createState() => _ActionChoiceExampleState();
 }

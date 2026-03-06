@@ -152,7 +152,8 @@ class _AllProductsState extends State<AllProducts> {
         name: p.name,
         imageUrl: p.image,
         regularPrice: p.salePrice,
-        onAddToCart: () => print("Added ${p.name}"),
+        product: p,
+        onAddToCart: () => print("Added ${p.name}"), 
       ),
     );
   },

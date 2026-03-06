@@ -101,7 +101,7 @@ Widget _buildCartOverlay(BuildContext context) {
   
   for (var item in globalCart) {
     // This logic cleans the price string (removes ₹) and converts it to a number
-    double itemPrice = double.tryParse(item.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    double itemPrice = double.tryParse(item.price.replaceAll(RegExp(r'[^0-9 .]'), '')) ?? 0;
     subtotal += itemPrice * item.quantity;
   }
 
@@ -219,8 +219,16 @@ Widget _buildCartItem({
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                  // Wrapped the close icon in a GestureDetector
+                 Expanded(
+            child: Text(
+              name,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              softWrap: true,    
+              maxLines: 2,        
+              overflow: TextOverflow.ellipsis, 
+            ),
+          ),
+               
                   GestureDetector(
                     onTap: onRemove, 
                     child: const Icon(Icons.close, size: 18, color: Colors.grey),
