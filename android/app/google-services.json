@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "536255364081",
+    "project_id": "glowfit-4dfe8",
+    "storage_bucket": "glowfit-4dfe8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:536255364081:android:a4b16c43976a645f7ba250",
+        "android_client_info": {
+          "package_name": "com.rd.glowfit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBDBOfk7l7rz1yonFIv36hxJblY67JGVA0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

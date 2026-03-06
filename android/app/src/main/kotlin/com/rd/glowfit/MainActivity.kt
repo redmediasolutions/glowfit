@@ -1,4 +1,4 @@
-package com.example.beauty_app
+package com.rd.glowfit
 
 import io.flutter.embedding.android.FlutterActivity
 
