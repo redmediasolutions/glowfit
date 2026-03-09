@@ -1,11 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:glowfit/components/products_List.dart';
-import 'package:glowfit/components/search.dart';
-import 'package:glowfit/components/secondaryscaffold.dart';
 import 'package:glowfit/models/product_model.dart';
 import 'package:glowfit/services/api.dart';
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 
 
 class Searchpage extends StatefulWidget {
@@ -17,56 +15,45 @@ class Searchpage extends StatefulWidget {
 
 class _SearchpageState extends State<Searchpage> {
   late Future<List<Productsmodel>> _productsFuture;
-  int? _currentCategoryId;
-  // Track the current search and category
-  final String _searchQuery = "";
-  int? _selectedCategoryId; 
+  int? _selectedCategoryId;
+  int _resultCount = 0;
 
- @override
+  @override
   void initState() {
     super.initState();
-    _fetchFilteredProducts();
-  }
-  // Helper to trigger the API fetch with current filters
-  void _loadProducts() {
-    setState(() {
-      _productsFuture = APIService.fetchProducts(
-     
-        // search: _searchQuery, // Ensure your APIService supports a 'search' param
-        categoryId: _selectedCategoryId,
-      );
-    });
+    _fetchFilteredProducts(); 
   }
 
-
-  // This function handles the API refresh logic
+  // Handles Category Selection
   void _fetchFilteredProducts({int? categoryId}) {
     setState(() {
-      _currentCategoryId = categoryId;
-      // We pass the categoryId to your existing API service
-      _productsFuture = APIService.fetchProducts(
-        categoryId: _currentCategoryId,
-       
-      );
+      _selectedCategoryId = categoryId;
+      _productsFuture = APIService.fetchProducts(categoryId: _selectedCategoryId).then((list) {
+        setState(() => _resultCount = list.length);
+        return list;
+      });
     });
   }
-  // This will be called by the Category Chips
+
+  // Handles Custom Search (Name, Salt, Brand)
   void _performSearch(String query) {
-  setState(() {
-  
-    _productsFuture = APIService.fetchProducts(
-     search: query, 
-      categoryId: _selectedCategoryId, 
-   
-    );
-  });
-}
-  // This will be called by the Search Field
-  
+    if (query.isEmpty) {
+      _fetchFilteredProducts(categoryId: _selectedCategoryId);
+      return;
+    }
+
+    setState(() {
+      _productsFuture = APIService.searchProducts(query).then((list) {
+        setState(() => _resultCount = list.length);
+        return list;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Secondaryscaffold(
-  
+    return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -78,33 +65,33 @@ class _SearchpageState extends State<Searchpage> {
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: Text(
                   'Search',
-                  style: GoogleFonts.inter(
-                    fontSize: 48,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -1,
-                  ),
+                  style: GoogleFonts.inter(fontSize: 48, fontWeight: FontWeight.w600),
                 ),
               ),
               const SizedBox(height: 30),
+              // SEARCH FIELD
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                child: SearchField(
-                  onSearchChanged: (query) => _performSearch(query),
-                ), // Updated search component
+                child: TextField(
+                  onChanged: _performSearch,
+                  decoration: InputDecoration(
+                    hintText: "Search name, salt, or brand...",
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
               ),
               const SizedBox(height: 35),
-              ActionChoiceExample(
-                onCategorySelected: (id) {
-                _fetchFilteredProducts(categoryId: id);
-              },
-              ), // The Category chips
+              // CATEGORY CHIPS
+              // ActionChoiceExample(
+              //   onCategorySelected: (id) => _fetchFilteredProducts(categoryId: id),
+              // ),
               const SizedBox(height: 40),
-              
-              // Results counter
+              // RESULT COUNTER
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: Text(
-                  "18 RESULTS",
+                  "$_resultCount RESULTS",
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     letterSpacing: 2,
@@ -113,69 +100,45 @@ class _SearchpageState extends State<Searchpage> {
                   ),
                 ),
               ),
-              
-              // GestureDetector(
-              //   onTap: (){
-              //     context.go('/productview');
-              //   },
-               GestureDetector(
-                onTap: () {
-                  /// Navigator.push(context,MaterialPageRoute(builder: (context)=>ProductsView()));
-                  context.go('/productview');
+              // PRODUCT GRID
+              FutureBuilder<List<Productsmodel>>(
+                future: _productsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: Padding(padding: EdgeInsets.all(50), child: CircularProgressIndicator()));
+                  }
+                  if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Padding(padding: EdgeInsets.all(50), child: Text("No products found")));
+                  }
+
+                  final products = snapshot.data!;
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    itemCount: products.length,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 20,
+                      crossAxisSpacing: 15,
+                      childAspectRatio: 0.7,
+                    ),
+                    itemBuilder: (context, index) {
+                      final p = products[index];
+                      return GestureDetector(
+                        onTap: () => context.push('/productview', extra: p),
+                        child: ProductsList(
+                          id: p.id.toString(),
+                          name: p.name,
+                          imageUrl: p.image,
+                          regularPrice: p.regularPrice,
+                          product: p,
+                          onAddToCart: () {},
+                        ),
+                      );
+                    },
+                  );
                 },
-           child:   FutureBuilder<List<Productsmodel>>(
-  future: _productsFuture,
-  builder: (context, snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 50),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    if (snapshot.hasError) {
-      return const Center(child: Text("Error loading products"));
-    }
-
-    if (!snapshot.hasData || snapshot.data!.isEmpty) {
-      return const Center(child: Text("No products found"));
-    }
-
-    final products = snapshot.data!;
-
-    return GridView.builder(
-      shrinkWrap: true, // Crucial: Allows GridView to live inside a ScrollView
-      physics: const NeverScrollableScrollPhysics(), // Let the parent handle scrolling
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      itemCount: products.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,          // 2 items per row
-        mainAxisSpacing: 20,        // Vertical space between cards
-        crossAxisSpacing: 15,       // Horizontal space between cards
-        childAspectRatio: 0.75,     // Adjust this to fit your card's height/width ratio
-      ),
-      itemBuilder: (context, index) {
-        final p = products[index];
-
-        return GestureDetector(
-          onTap: () => context.push('/productview', extra: p),
-          child: ProductsList(
-            id: p.id.toString(),
-            name: p.name,
-            imageUrl: p.image,
-            regularPrice: p.regularPrice,
-            product: p,
-            onAddToCart: () {
-              print("Added ${p.name} to cart");
-            },
-          ),
-        );
-      },
-    );
-  },
-)
               ),
             ],
           ),
@@ -183,74 +146,4 @@ class _SearchpageState extends State<Searchpage> {
       ),
     );
   }
-}
-
-
-
-
-
-class ActionChoiceExample extends StatefulWidget {
-  final Function(int? categoryId) onCategorySelected;  
-  const ActionChoiceExample({super.key, required this.onCategorySelected});
-  @override
-  State<ActionChoiceExample> createState() => _ActionChoiceExampleState();
-}
-
-class _ActionChoiceExampleState extends State<ActionChoiceExample> {
-  int? _value = 0;
-
-  // IMPORTANT: Map your names to your actual Backend Category IDs
-  final List<Map<String, dynamic>> categories = [
-    {'name': 'All', 'id': null},
-    {'name': 'Products', 'id': 17}, 
-    {'name': 'HomePage', 'id': 19},
-    {'name': 'Serums', 'id': 20},
-    {'name': 'Haircare', 'id': 22},
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20), 
-      child: Row(
-        children: categories.asMap().entries.map((entry) {
-          int index = entry.key;
-          String name = entry.value['name'];
-          int? catId = entry.value['id'];
-
-          return Padding(
-            padding: const EdgeInsets.only(right: 12.0),
-            child: ChoiceChip(
-              label: Text(name.toUpperCase()), 
-              selected: _value == index,
-              showCheckmark: false,
-              labelStyle: GoogleFonts.montserrat(
-                fontSize: 12,
-                letterSpacing: 1.5,
-                fontWeight: FontWeight.w600,
-                color: _value == index ? Colors.white : Colors.black,
-              ),
-              selectedColor: Colors.black,
-              backgroundColor: const Color(0xFFEBEBEB), 
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.zero,
-                side: BorderSide.none,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              onSelected: (bool selected) {
-                setState(() {
-                  _value = selected ? index : null;
-                });
-              
-                widget.onCategorySelected(selected ? catId : null);
-              },
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
 }

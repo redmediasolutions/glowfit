@@ -1,10 +1,11 @@
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:glowfit/Auth/mobilelogin.dart';
 import 'package:glowfit/components/galleryimage.dart';
 import 'package:glowfit/models/product_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:glowfit/pages/auth/login.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:visibility_detector/visibility_detector.dart';
@@ -30,7 +31,7 @@ Widget scrollTriggered(Widget child, String key) {
     ),
   );
 }
-
+final CarouselSliderController _carouselController = CarouselSliderController();
 class ProductsView extends StatefulWidget {
   final Productsmodel product;
   const ProductsView({super.key, required this.product});
@@ -108,7 +109,7 @@ class _ProductsViewState extends State<ProductsView> {
                   builder: (context) {
                     return Padding(
                       padding: MediaQuery.viewInsetsOf(context),
-                      child: MobileLoginWidget(),
+                      child: MobileLogin(),
                     );
                   },
                 );
@@ -210,7 +211,6 @@ class _ProductsViewState extends State<ProductsView> {
           children: [
             // --- SECTION 1: HERO (Large spacing, occupies most of screen) ---
             _buildHeroSection(context, p),
-            _buildgalleryimage(context, p),
             const SizedBox(height: 10),
             _productdetails(context, p),
             const SizedBox(height: 50),
@@ -237,91 +237,111 @@ class _ProductsViewState extends State<ProductsView> {
     );
   }
 
-  Widget _buildHeroSection(BuildContext context, Productsmodel p) {
-    return Stack(
-      children: [
-        Container(
+
+
+Widget _buildHeroSection(BuildContext context, Productsmodel p) {
+  // Combine main image and gallery images into one list
+  final List<String> allImages = [p.image ?? '', ...p.galleryImages]
+      .where((img) => img.isNotEmpty)
+      .toList();
+
+  return Stack(
+    children: [
+      // --- Full Screen Carousel ---
+      CarouselSlider(
+        carouselController: _carouselController,
+        options: CarouselOptions(
           height: 600,
-          width: double.infinity,
-          color: const Color(0xFFF5F5F7),
-          child: Image.network(
-            selectedImage ?? p.image ?? 'https://via.placeholder.com/380',
-            fit: BoxFit.contain,
-          ).animate().fadeIn(duration: 1200.ms).moveY(begin: 20, end: 0),
-        ),
-
-        Positioned(
-          bottom: 30,
-          left: 25,
-          right: 25,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                p.categories,
-                style: GoogleFonts.inter(
-                  letterSpacing: 3,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black45,
-                ),
-              ),
-              const SizedBox(height: 15),
-              Text(
-                p.name,
-                style: GoogleFonts.tenorSans(
-                  fontSize: 25,
-                  height: 1.0,
-                  color: Colors.black,
-                ),
-              ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.1, end: 0),
-
-              const SizedBox(height: 25),
-
-              Text(
-                "₹ ${p.salePrice}",
-                style: GoogleFonts.tenorSans(
-                  fontSize: 20,
-                  height: 1.0,
-                  color: Colors.black,
-                ),
-              ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.1, end: 0),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  //=============Gallery Image=============================
-  Widget _buildgalleryimage(BuildContext context, Productsmodel p) {
-    return Padding(
-      padding: const EdgeInsets.all(10),
-      child: SizedBox(
-        height: 100,
-        width: 500,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          itemCount: p.galleryImages.length,
-          itemBuilder: (context, index) {
-            final image = p.galleryImages[index];
-            return Padding(
-              padding: const EdgeInsets.only(right: 10),
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    selectedImage = image;
-                  });
-                },
-                child: GalleryImage(imageUrl: p.galleryImages[index]),
-              ),
-            );
+          viewportFraction: 1.0, // Ensures the image takes full width
+          enlargeCenterPage: false,
+          enableInfiniteScroll: allImages.length > 1, 
+          autoPlay: false, // Set to true if you want it to slide automatically
+          onPageChanged: (index, reason) {
+            setState(() {
+              selectedImage = allImages[index];
+            });
           },
         ),
+        items: allImages.map((imageUrl) {
+          return Container(
+            width: MediaQuery.of(context).size.width,
+            color: const Color(0xFFF5F5F7), // Light grey background for product shots
+            child: Image.network(
+              imageUrl,
+              fit: BoxFit.cover, // Use cover if you want it to fill the 600 height
+              errorBuilder: (context, error, stackTrace) => 
+                  const Icon(Icons.broken_image, size: 50),
+            ).animate().fadeIn(duration: 800.ms),
+          );
+        }).toList(),
       ),
-    );
-  }
 
+      // --- Modern Page Indicators (The "Dots") ---
+      if (allImages.length > 1)
+        Positioned(
+          top: 550, // Positioned just above the text area
+          left: 0,
+          right: 0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: allImages.asMap().entries.map((entry) {
+              return Container(
+                width: 8.0,
+                height: 8.0,
+                margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: selectedImage == entry.value
+                      ? Colors.black
+                      : Colors.black.withOpacity(0.2),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+
+      // --- Product Info Overlay ---
+      Positioned(
+        bottom: 30,
+        left: 25,
+        right: 25,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              p.categories.toUpperCase(),
+              style: GoogleFonts.inter(
+                letterSpacing: 3,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.black45,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              p.name,
+              style: GoogleFonts.tenorSans(
+                fontSize: 26,
+                height: 1.1,
+                color: Colors.black,
+              ),
+            ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.1, end: 0),
+            const SizedBox(height: 12),
+            Text(
+              "₹ ${p.salePrice}",
+              style: GoogleFonts.tenorSans(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+  
   Widget _productdetails(BuildContext context, Productsmodel p) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
@@ -380,7 +400,7 @@ class _ProductsViewState extends State<ProductsView> {
                 style: GoogleFonts.tenorSans(fontSize: 20, color: Colors.black),
               ),
               Text(
-                p.manufactured ?? '',
+                p.brand ?? '',
                 textAlign: TextAlign.justify,
                 style: GoogleFonts.inter(
                   fontSize: 16,

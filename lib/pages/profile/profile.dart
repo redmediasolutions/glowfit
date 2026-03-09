@@ -26,13 +26,7 @@ class Profile extends StatelessWidget {
                     fontWeight: FontWeight.w400,
                   ),
                 ),
-                Text(
-                  'sophia.laurent@email.com',
-                  style: GoogleFonts.inter(
-                    color: Colors.black45,
-                    fontSize: 15,
-                  ),
-                ),
+              
                 const SizedBox(height: 35),
 
                 // --- Quick Stats Row ---
@@ -78,7 +72,7 @@ class Profile extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: () {
                      // context.push('/login'); 
-                      Navigator.push(context,MaterialPageRoute(builder: (context)=>EmailLoginPage()) );
+                      Navigator.push(context,MaterialPageRoute(builder: (context)=>MobileLogin()) );
                     },
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 20),

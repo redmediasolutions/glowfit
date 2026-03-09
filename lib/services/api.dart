@@ -8,109 +8,102 @@ class APIService {
   static final client = http.Client();
 
   static Map<String, String> getHeaders() {
-    final basicAuth = 'Basic ${base64Encode(
-      utf8.encode("${Config.consumerKey}:${Config.consumerSecret}"),
-    )}';
+    final basicAuth =
+        'Basic ${base64Encode(utf8.encode("${Config.consumerKey}:${Config.consumerSecret}"))}';
 
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': basicAuth,
-    };
+    return {'Content-Type': 'application/json', 'Authorization': basicAuth};
   }
 
   static Map<String, String> getPublicHeaders() {
-    return {
-      'Content-Type': 'application/json',
+    return {'Content-Type': 'application/json'};
+  }
+
+  static Future<List<Productsmodel>> fetchProductsByCategory({
+    required String
+    categoryId, // Ensure this is a numeric ID string, e.g., "15"
+    int page = 1,
+    int perPage = 10,
+  }) async {
+    // If your ID is coming in as "0" or empty, the API will return nothing.
+    if (categoryId.isEmpty || categoryId == "0") {
+      print("⚠️ Warning: categoryId is empty or zero.");
+    }
+
+    final queryParams = {
+      'category': categoryId, // WooCommerce uses 'category' for IDs
+      'page': page.toString(),
+      'per_page': perPage.toString(),
+      'status': 'publish', // Added to ensure only live products show
     };
-  }
 
-static Future<List<Productsmodel>> fetchProductsByCategory({
-  required String categoryId, // Ensure this is a numeric ID string, e.g., "15"
-  int page = 1,
-  int perPage = 10,
-}) async {
-  // If your ID is coming in as "0" or empty, the API will return nothing.
-  if (categoryId.isEmpty || categoryId == "0") {
-    print("⚠️ Warning: categoryId is empty or zero.");
-  }
+    final queryString = Uri(queryParameters: queryParams).query;
+    final requestUrl =
+        "${Config.baseUrl}${Config.apiPath}${Config.productsURL}?$queryString";
 
-  final queryParams = {
-    'category': categoryId, // WooCommerce uses 'category' for IDs
-    'page': page.toString(),
-    'per_page': perPage.toString(),
-    'status': 'publish', // Added to ensure only live products show
-  };
+    print("🌐 Requesting: $requestUrl");
 
-  final queryString = Uri(queryParameters: queryParams).query;
-  final requestUrl = "${Config.baseUrl}${Config.apiPath}${Config.productsURL}?$queryString";
+    try {
+      final response = await client.get(
+        Uri.parse(requestUrl),
+        headers: getHeaders(),
+      );
 
-  print("🌐 Requesting: $requestUrl");
-
-  try {
-    final response = await client.get(
-      Uri.parse(requestUrl),
-      headers: getHeaders(),
-    );
-
-    if (response.statusCode == 200) {
-      final List list = jsonDecode(response.body);
-      print("✅ API returned ${list.length} products for category $categoryId");
-      return list.map((e) => Productsmodel.fromJson(e)).toList();
+      if (response.statusCode == 200) {
+        final List list = jsonDecode(response.body);
+        print(
+          "✅ API returned ${list.length} products for category $categoryId",
+        );
+        return list.map((e) => Productsmodel.fromJson(e)).toList();
+      }
+    } catch (e) {
+      print("🚨 API Error: $e");
     }
-  } catch (e) {
-    print("🚨 API Error: $e");
+    return [];
   }
-  return [];
-}
 
-static Future<List<Productsmodel>> fetchProducts({
-  int page = 1,
-  int perPage = 33, 
-  int? categoryId, 
-  String? search,
-}) async {
-  final queryParams = {
-    'page': page.toString(),
-    'per_page': perPage.toString(),
-    'orderby': 'date',
-    'order': 'desc',
-    if (search != null && search.isNotEmpty) 'search': search,
-    if (categoryId != null) 'category': categoryId.toString(), 
-  };
+  static Future<List<Productsmodel>> fetchProducts({
+    int page = 1,
+    int perPage = 33,
+    int? categoryId,
+    String? search,
+  }) async {
+    final queryParams = {
+      'page': page.toString(),
+      'per_page': perPage.toString(),
+      'orderby': 'date',
+      'order': 'desc',
+      if (search != null && search.isNotEmpty) 'search': search,
+      if (categoryId != null) 'category': categoryId.toString(),
+    };
 
-  final queryString = Uri(queryParameters: queryParams).query;
+    final queryString = Uri(queryParameters: queryParams).query;
 
-  final requestUrl =
-      "${Config.baseUrl}${Config.apiPath}${Config.productsURL}?$queryString";
+    final requestUrl =
+        "${Config.baseUrl}${Config.apiPath}${Config.productsURL}?$queryString";
 
-  print("🌐 [API] Fetch products → Page: $page | Category: $categoryId");
+    print("🌐 [API] Fetch products → Page: $page | Category: $categoryId");
 
-  try {
-    final response = await client.get(
-      Uri.parse(requestUrl),
-      headers: getHeaders(),
-    );
+    try {
+      final response = await client.get(
+        Uri.parse(requestUrl),
+        headers: getHeaders(),
+      );
 
-    if (response.statusCode == 200) {
-      final List list = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final List list = jsonDecode(response.body);
 
-      print(
-          "✅ [API] Products fetched: ${list.length} items");
+        print("✅ [API] Products fetched: ${list.length} items");
 
-      return list
-          .map((e) => Productsmodel.fromJson(e))
-          .toList();
-    } else {
-      print(
-          "❌ [API] Error ${response.statusCode}: ${response.body}");
+        return list.map((e) => Productsmodel.fromJson(e)).toList();
+      } else {
+        print("❌ [API] Error ${response.statusCode}: ${response.body}");
+      }
+    } catch (e) {
+      print("🚨 [API] fetchProducts error: $e");
     }
-  } catch (e) {
-    print("🚨 [API] fetchProducts error: $e");
+
+    return [];
   }
-
-  return [];
-}
-
 
   static Future<ProductDetail?> fetchSingleProductDetail(
     String productId,
@@ -133,7 +126,8 @@ static Future<List<Productsmodel>> fetchProducts({
 
     return null;
   }
-static Future<List<Productsmodel>> fetchProductsByIds(
+
+  static Future<List<Productsmodel>> fetchProductsByIds(
     List<int> productIds,
   ) async {
     if (productIds.isEmpty) return [];
@@ -156,18 +150,32 @@ static Future<List<Productsmodel>> fetchProductsByIds(
 
       if (response.statusCode == 200) {
         final List list = jsonDecode(response.body);
-        return list
-            .map((e) => Productsmodel.fromJson(e))
-            .toList();
+        return list.map((e) => Productsmodel.fromJson(e)).toList();
       }
     } catch (_) {}
 
     return [];
   }
 
+  static Future<List<Productsmodel>> searchProducts(String query) async {
+    // Replace with your actual domain and custom endpoint path
+    final String url =
+        "https://gs.redmediasolutions.in/wp-json/my-app/v1/search?query=$query";
 
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        final List<dynamic> data = responseData['data'];
 
-
-
-
+        // Map the dynamic list to your Productsmodel list
+        return data.map((json) => Productsmodel.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load products');
+      }
+    } catch (e) {
+      print("Search Error: $e");
+      return [];
+    }
+  }
 }

@@ -2,13 +2,14 @@
 import 'dart:convert';
 
 import 'package:firebase_remote_config/firebase_remote_config.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http; // Import for HTTP
 import 'package:firebase_auth/firebase_auth.dart'; // Import for Auth
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-
+final String categoryId = "0";
 // --- MAIN LOGIN WIDGET ---
 class MobileLoginWidget extends StatefulWidget {
   const MobileLoginWidget({super.key});
@@ -434,7 +435,7 @@ class _OtpVerificationSheetState extends State<OtpVerificationSheet> {
 
       // ✅ Navigate to Home
       if (mounted) {
-        context.goNamed('HomePage');
+         GoRouter.of(rootContext).go('/home', extra: int.parse(categoryId));
       }
     } catch (e) {
       print("Verify Error: $e");
