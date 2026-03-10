@@ -43,7 +43,7 @@ class AppRouter {
       }
 
       /// If logged in and on login page → go to home
-      if (user != null && isLoginPage) {
+      if (isLoginPage) {
         return '/home';
       }
 

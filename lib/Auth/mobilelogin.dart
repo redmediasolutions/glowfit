@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
 import 'package:go_router/go_router.dart';
 import 'package:pinput/pinput.dart';
 
@@ -10,6 +9,7 @@ class MobileLogin extends StatefulWidget {
   @override
   State<MobileLogin> createState() => _MobileLoginState();
 }
+
 final String categoryId = "0";
 
 class _MobileLoginState extends State<MobileLogin> {
@@ -21,14 +21,18 @@ class _MobileLoginState extends State<MobileLogin> {
   bool _isOtpSent = false;
   bool _isLoading = false;
 
-  // Step 1: Request OTP
+  // Colors for a modern E-commerce vibe
+  final Color primaryColor = const Color(0xFF6366F1); // Modern Indigo
+  final Color secondaryColor = const Color(0xFFF1F5F9); // Light Slate
+
+  // --- Logic remains untouched as per request ---
   Future<void> _sendOtp() async {
     setState(() => _isLoading = true);
+    final String fullPhoneNumber = "+91${_phoneController.text.trim()}";
     try {
       await _auth.verifyPhoneNumber(
-        phoneNumber: _phoneController.text.trim(),
+        phoneNumber:fullPhoneNumber,
         verificationCompleted: (PhoneAuthCredential credential) async {
-          // Auto-retrieval (Android only)
           await _auth.signInWithCredential(credential);
           _navigateToHome();
         },
@@ -36,6 +40,7 @@ class _MobileLoginState extends State<MobileLogin> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Verification Failed: ${e.message}")),
           );
+          setState(() => _isLoading = false);
         },
         codeSent: (String verificationId, int? resendToken) {
           setState(() {
@@ -49,11 +54,11 @@ class _MobileLoginState extends State<MobileLogin> {
         },
       );
     } catch (e) {
-      print("Error: $e");
+      debugPrint("Error: $e");
+      setState(() => _isLoading = false);
     }
   }
 
-  // Step 2: Verify OTP
   Future<void> _verifyOtp() async {
     setState(() => _isLoading = true);
     try {
@@ -61,77 +66,170 @@ class _MobileLoginState extends State<MobileLogin> {
         verificationId: _verificationId,
         smsCode: _otpController.text.trim(),
       );
-
       await _auth.signInWithCredential(credential);
       _navigateToHome();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Invalid OTP. Try again.")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Invalid OTP. Try again.")));
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
- void _navigateToHome() {
-  // Pass the 'extra' parameter that GoRouter is expecting
-  context.go('/home',  extra: int.parse(categoryId)); 
-}
+  void _navigateToHome() {
+    context.go('/home', extra: int.parse(categoryId));
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Mobile Login")),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (!_isOtpSent) ...[
-              const Text("Enter your phone number to continue", style: TextStyle(fontSize: 16)),
-              const SizedBox(height: 20),
-              TextField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: "Phone Number (e.g., +91...)",
-                  prefixIcon: Icon(Icons.phone),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 30.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 60),
+              // Header Image/Icon
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.shopping_bag_rounded,
+                    size: 60,
+                    color: primaryColor,
+                  ),
                 ),
               ),
-              const SizedBox(height: 20),
-              _isLoading 
-                ? const CircularProgressIndicator()
-                : SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(onPressed: _sendOtp, child: const Text("Get OTP")),
-                  ),
-            ] else ...[
-              const Text("Verify your number", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 40),
+              // Dynamic Text Section
+              Text(
+                _isOtpSent ? "Verification" : "Welcome Back",
+                style: const TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -1,
+                ),
+              ),
               const SizedBox(height: 10),
-              Text("Sent to ${_phoneController.text}"),
-              const SizedBox(height: 30),
-              
-              // Pinput widget for better UI
-              Pinput(
-                length: 6,
-                controller: _otpController,
-                onCompleted: (pin) => _verifyOtp(),
+              Text(
+                _isOtpSent
+                    ? "We've sent a 6-digit code to ${_phoneController.text}"
+                    : "Sign in to continue your shopping journey.",
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               ),
-              
-              const SizedBox(height: 30),
-              _isLoading 
-                ? const CircularProgressIndicator()
-                : SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(onPressed: _verifyOtp, child: const Text("Verify OTP")),
+              const SizedBox(height: 50),
+
+              if (!_isOtpSent) ...[
+                // Phone Input
+                TextField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
                   ),
-              TextButton(
-                onPressed: () => setState(() => _isOtpSent = false),
-                child: const Text("Edit Phone Number"),
-              ),
+                  decoration: InputDecoration(
+                    // Adds the +91 prefix permanently to the start of the field
+                    prefixIcon: const Icon(Icons.phone_android),
+                    prefixText: "+91 ",
+                    prefixStyle: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    hintText: "Enter Mobile Number",
+                    filled: true,
+                    fillColor: secondaryColor,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ] else ...[
+                // Custom Pinput Design
+                Center(
+                  child: Pinput(
+                    length: 6,
+                    controller: _otpController,
+                    onCompleted: (pin) => _verifyOtp(),
+                    defaultPinTheme: PinTheme(
+                      width: 50,
+                      height: 56,
+                      textStyle: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      decoration: BoxDecoration(
+                        color: secondaryColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    focusedPinTheme: PinTheme(
+                      width: 50,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: primaryColor, width: 2),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 40),
+
+              // Main Button
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SizedBox(
+                      width: double.infinity,
+                      height: 58,
+                      child: ElevatedButton(
+                        onPressed: _isOtpSent ? _verifyOtp : _sendOtp,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          _isOtpSent ? "Verify Now" : "Get Verification Code",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+
+              if (_isOtpSent) ...[
+                const SizedBox(height: 15),
+                Center(
+                  child: TextButton(
+                    onPressed: () => setState(() => _isOtpSent = false),
+                    child: Text(
+                      "Edit Phone Number",
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
