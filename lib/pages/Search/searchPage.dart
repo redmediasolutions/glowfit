@@ -42,12 +42,12 @@ class _SearchpageState extends State<Searchpage> {
       return;
     }
 
-    setState(() {
-      _productsFuture = APIService.searchProducts(query).then((list) {
-        setState(() => _resultCount = list.length);
-        return list;
-      });
-    });
+   setState(() {
+  _productsFuture = APIService().searchProducts(query).then((list) {
+    _resultCount = list.length;
+    return list;
+  });
+});
   }
 
   @override

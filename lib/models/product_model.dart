@@ -31,31 +31,31 @@ class Productsmodel {
     this.salePrice,
     required this.categoryIds,
     required this.isNotForSale,
-    required this.canAddToCart, 
-    this.manufactured, 
-    this.composition, 
+    required this.canAddToCart,
+    this.manufactured,
+    this.composition,
     this.packagesize,
   });
 
   factory Productsmodel.fromJson(Map<String, dynamic> json) {
     String? sideffects;
     String? howdoesitwork;
-    
-    // 1. TOP-LEVEL KEYS (Outside metadata - for your Custom Search)
-    // We check 'brand', 'manufacturer', and 'brand_name' directly
-    String? brandValue = json['brands']?.toString() ?? 
-                         json['manufacturer']?.toString() ?? 
-                         json['name']?.toString();
-                         
-    String? compositionValue = json['composition_meta']?.toString() ?? 
-                               json['composition']?.toString();
-                               
-    String? packageValue = json['package_meta']?.toString() ?? 
-                           json['package']?.toString();
+    String? brandValue =
+        json['name'] ?? json['manufacturer'] ?? json['brands'] ?? '';
+
+    String? compositionValue =
+        json['composition_meta']?.toString() ?? json['composition']?.toString();
+
+    String? packageValue =
+        json['package_meta']?.toString() ?? json['package']?.toString();
 
     // 2. BRANDS ARRAY (For plugin data like Steris)
     if (json['brands'] is List && (json['brands'] as List).isNotEmpty) {
-      brandValue = json['brands'][0]['name']?.toString() ?? brandValue;
+      final brandList = json['brands'] as List;
+      final firstBrand = brandList.first;
+      if (firstBrand is Map && firstBrand['name'] != null) {
+        brandValue = firstBrand['name'].toString();
+      }
     }
 
     // 3. NESTED META_DATA (Fallback for Standard WooCommerce API)
@@ -91,7 +91,10 @@ class Productsmodel {
     List<String> galleryImages = [];
     if (json['images'] is List) {
       galleryImages = (json['images'] as List)
-          .map((img) => img is Map ? (img['src']?.toString() ?? '') : img.toString())
+          .map(
+            (img) =>
+                img is Map ? (img['src']?.toString() ?? '') : img.toString(),
+          )
           .where((url) => url.isNotEmpty)
           .toList();
     } else if (json['image'] != null) {
@@ -99,15 +102,20 @@ class Productsmodel {
     }
 
     // 5. CATEGORY HANDLING
-    final List categoriesList = json['categories'] is List ? json['categories'] : [];
+    final List categoriesList = json['categories'] is List
+        ? json['categories']
+        : [];
     final List<int> categoryIds = categoriesList
-        .map((e) => int.tryParse(e is Map ? e['id'].toString() : e.toString()) ?? 0)
+        .map(
+          (e) =>
+              int.tryParse(e is Map ? e['id'].toString() : e.toString()) ?? 0,
+        )
         .toList();
 
     String categoryName = '';
     if (categoriesList.isNotEmpty) {
-      categoryName = categoriesList[0] is Map 
-          ? (categoriesList[0]['name']?.toString() ?? '') 
+      categoryName = categoriesList[0] is Map
+          ? (categoriesList[0]['name']?.toString() ?? '')
           : categoriesList[0].toString();
     }
 
@@ -119,7 +127,7 @@ class Productsmodel {
       sideeeffects: sideffects,
       working: howdoesitwork,
       manufactured: brandValue, // Assigned from the top-level or brand array
-      brand: brandValue,        // Assigned for general usage
+      brand: brandValue, // Assigned for general usage
       composition: compositionValue,
       packagesize: packageValue,
       image: galleryImages.isNotEmpty ? galleryImages.first : null,
@@ -128,7 +136,8 @@ class Productsmodel {
       salePrice: _parseDouble(json['sale_price']),
       categoryIds: categoryIds,
       isNotForSale: categoryIds.contains(94),
-      canAddToCart: json['stock_status'] == 'instock' && !categoryIds.contains(94),
+      canAddToCart:
+          json['stock_status'] == 'instock' && !categoryIds.contains(94),
     );
   }
 
@@ -140,7 +149,10 @@ class Productsmodel {
 
   static String? _cleanHtml(dynamic value) {
     if (value == null || value == '') return null;
-    String clean = value.toString().replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ' ').trim();
+    String clean = value
+        .toString()
+        .replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ' ')
+        .trim();
     return clean.isEmpty ? null : clean;
   }
 }

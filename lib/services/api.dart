@@ -157,25 +157,33 @@ class APIService {
     return [];
   }
 
-  static Future<List<Productsmodel>> searchProducts(String query) async {
-    // Replace with your actual domain and custom endpoint path
-    final String url =
-        "https://gs.redmediasolutions.in/wp-json/my-app/v1/search?query=$query";
 
-    try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        final List<dynamic> data = responseData['data'];
+ Future<List<Productsmodel>> searchProducts(String query) async {
+  final uri = Uri.https(
+    "gs.redmediasolutions.in",
+    "/wp-json/my-app/v1/search",
+    {"query": query},
+  );
 
-        // Map the dynamic list to your Productsmodel list
-        return data.map((json) => Productsmodel.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to load products');
-      }
-    } catch (e) {
-      print("Search Error: $e");
-      return [];
+  try {
+    final response = await http.get(uri);
+    print("API RESPONSE:");
+print(response.body);
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+
+      final List data = decoded["data"] ?? [];
+
+      return data
+          .map((item) => Productsmodel.fromJson(item))
+          .toList();
     }
+
+    throw Exception("Failed to load products");
+  } catch (e) {
+    print("Search Error: $e");
+    return [];
   }
+}
 }
