@@ -12,7 +12,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 class Homepage extends StatefulWidget {
-  final String categoryId; 
+  final String categoryId;
   const Homepage({super.key, required this.categoryId});
 
   @override
@@ -32,21 +32,18 @@ class _HomepageState extends State<Homepage> {
   // Wrapper for Scroll-Triggered Animation
   Widget _buildAnimatedSection({required Widget child}) {
     return child
-        .animate(
-       
-          adapter: ScrollAdapter(_scrollController),
-        )
+        .animate(adapter: ScrollAdapter(_scrollController))
         .fadeIn(duration: 800.ms, curve: Curves.easeOut)
         .slideY(begin: 0.2, end: 0, curve: Curves.easeOutCubic);
   }
 
+  //==================== SCROLL TRIGGER HELPER (For more complex staggered animations) ==================
   Widget scrollTriggered(Widget Function(bool) builder, String key) {
     ValueNotifier<bool> isVisible = ValueNotifier(false);
 
     return VisibilityDetector(
       key: Key(key),
       onVisibilityChanged: (info) {
-       
         if (info.visibleFraction > 0.15 && !isVisible.value) {
           isVisible.value = true;
         }
@@ -67,12 +64,12 @@ class _HomepageState extends State<Homepage> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar:  AppBar(
+      appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         title: Text(
-          'GLOW & FIT',
+          'GladSkin',
           style: GoogleFonts.tenorSans(
             textStyle: const TextStyle(
               color: Colors.black,
@@ -82,54 +79,57 @@ class _HomepageState extends State<Homepage> {
             ),
           ),
         ),
-  actions: [
-  Padding(
-    padding: const EdgeInsets.only(right: 15),
-    child: StreamBuilder<QuerySnapshot>(
-      // 1. Listen to the current user's cart items
-      stream: FirebaseFirestore.instance
-          .collection('carts')
-          .doc(FirebaseAuth.instance.currentUser?.uid)
-          .collection('items')
-          .snapshots(),
-      builder: (context, snapshot) {
-        // 2. Calculate the total quantity from the snapshot
-        int totalItems = 0;
-        if (snapshot.hasData) {
-          for (var doc in snapshot.data!.docs) {
-            final data = doc.data() as Map<String, dynamic>;
-            totalItems += (data['quantity'] ?? 0) as int;
-          }
-        }
+        //===================== CART ICON WITH REAL-TIME BADGE UPDATES =====================
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 15),
+            child: StreamBuilder<QuerySnapshot>(
+              // 1. Listen to the current user's cart items
+              stream: FirebaseFirestore.instance
+                  .collection('carts')
+                  .doc(FirebaseAuth.instance.currentUser?.uid)
+                  .collection('items')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                // 2. Calculate the total quantity from the snapshot
+                int totalItems = 0;
+                if (snapshot.hasData) {
+                  for (var doc in snapshot.data!.docs) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    totalItems += (data['quantity'] ?? 0) as int;
+                  }
+                }
 
-        return IconButton(
-          onPressed: () {
-        
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const CartPage()),
-            );
-          },
-          icon: Badge(
-          
-            label: Text(
-              '$totalItems',
-              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-            ),
-          
-            isLabelVisible: totalItems > 0,
-            backgroundColor: Colors.redAccent,
-            child: const Icon(
-              Icons.shopping_bag_outlined,
-              color: Colors.black,
-              size: 26,
+                return IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const CartPage()),
+                    );
+                  },
+                  icon: Badge(
+                    label: Text(
+                      '$totalItems',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    isLabelVisible: totalItems > 0,
+                    backgroundColor: Colors.redAccent,
+                    child: const Icon(
+                      Icons.shopping_bag_outlined,
+                      color: Colors.black,
+                      size: 26,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
-        );
-      },
-    ),
-  ),
-],
+        ],
       ),
       body: SingleChildScrollView(
         controller: _scrollController,
@@ -143,25 +143,13 @@ class _HomepageState extends State<Homepage> {
               child: _buildHeroSection(context),
             ),
             const SizedBox(height: 50),
-      
+
             // --- SECTION 2: COLLECTIONS (Scroll Animated) ---
             _buildCollectionHeader(),
-      
+
             _buildHorizontalCollection(categoryId: "19"),
-      
+
             const SizedBox(height: 160),
-      
-            // _buildAnimatedSection(
-            //   child: Column(
-            //     crossAxisAlignment: CrossAxisAlignment.start,
-            //     children: [
-            //       _buildCollectionHeader(),
-            //       const SizedBox(height: 40),
-            //       _buildHorizontalCollection(),
-            //     ],
-            //   ),
-            // ),
-      
             // --- SECTION 3: PHILOSOPHY (Scroll Animated) ---
             _buildAnimatedSection(
               child: Column(
@@ -177,7 +165,7 @@ class _HomepageState extends State<Homepage> {
                 ],
               ),
             ),
-      
+
             _buildAnimatedSection(
               child: Column(
                 children: [
@@ -214,7 +202,7 @@ class _HomepageState extends State<Homepage> {
       ),
     );
   }
-
+//===================== IMAGE + TEXT HERO SECTION WITH OVERLAY CONTENT =====================
   Widget _buildHeroSection(BuildContext context) {
     return Stack(
       children: [
@@ -310,7 +298,7 @@ class _HomepageState extends State<Homepage> {
       ],
     );
   }
-
+//===================== COLLECTIONS SECTION WITH HORIZONTAL SCROLL AND ASYNC DATA FETCHING =====================
   Widget _buildCollectionHeader() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25),
@@ -335,8 +323,8 @@ class _HomepageState extends State<Homepage> {
     );
   }
 
+//====================== HORIZONTAL PRODUCT LIST WITH ASYNC FETCHING AND ERROR HANDLING ======================
   Widget _buildHorizontalCollection({required String categoryId}) {
-   
     return SizedBox(
       height: 520,
       child: FutureBuilder<List<Productsmodel>>(
@@ -365,78 +353,79 @@ class _HomepageState extends State<Homepage> {
               ),
             );
           }
-        return ListView.builder(
-          shrinkWrap: true,
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.only(left: 10),
-           itemCount: products.length,
-          itemBuilder: (context, index) {
-            final product = products[index];
-            return GestureDetector(
-              onTap: () => context.push('/productview', extra: product),
-              child: Container(
-                width: 320,
-              
-                margin: const EdgeInsets.only(right: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFAFAFA),
-                  borderRadius: BorderRadius.circular(45),
-                ),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                   Padding(
-            padding: const EdgeInsets.all(30.0),
-            child: ProductsList(
-              product: product,
-              id: product.id.toString(),
-              name: product.name,
-              imageUrl: product.image,
-              regularPrice: product.regularPrice,
-              onAddToCart: () => print("Added ${product.name}"),
-            ),
-          ),
-                    Positioned(
-                      top: 25,
-                      right: 25,
-                      child: Container(
-                        height: 50,
-                        width: 50,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 10,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
+          return ListView.builder(
+            shrinkWrap: true,
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.only(left: 10),
+            itemCount: products.length,
+            itemBuilder: (context, index) {
+              final product = products[index];
+              return GestureDetector(
+                onTap: () => context.push('/productview', extra: product),
+                child: Container(
+                  width: 320,
+
+                  margin: const EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFAFAFA),
+                    borderRadius: BorderRadius.circular(45),
+                  ),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(30.0),
+                        child: ProductsList(
+                          product: product,
+                          id: product.id.toString(),
+                          name: product.name,
+                          imageUrl: product.image,
+                          regularPrice: product.regularPrice,
+                          onAddToCart: () => print("Added ${product.name}"),
                         ),
-                        child: IconButton(
-                          onPressed: () {
-                           context.push('/productview', extra: product);
-                          },
-                          icon: Icon(
-                            Icons.arrow_forward_ios_outlined,
-                            size: 16,
-                            color: Colors.black,
+                      ),
+                      Positioned(
+                        top: 25,
+                        right: 25,
+                        child: Container(
+                          height: 50,
+                          width: 50,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 10,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            onPressed: () {
+                              context.push('/productview', extra: product);
+                            },
+                            icon: Icon(
+                              Icons.arrow_forward_ios_outlined,
+                              size: 16,
+                              color: Colors.black,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
-        );
-        }
+              );
+            },
+          );
+        },
       ),
     );
   }
 
+  //====================== PHILOSOPHY SECTION WITH STAGGERED ANIMATIONS ======================
   Widget _buildPhilosophySection(BuildContext context, bool visible) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 60),
@@ -490,7 +479,7 @@ class _HomepageState extends State<Homepage> {
       ),
     );
   }
-
+//===================== OUR INGREDIENTS SECTION WITH IMAGE AND BULLET POINTS =====================
   Widget _buildOurIngredients(BuildContext context, bool visible) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 40.0),
@@ -557,7 +546,7 @@ class _HomepageState extends State<Homepage> {
       ),
     );
   }
-
+//===================== OUR INGREDIENTS SECTION WITH IMAGE AND BULLET POINTS =====================
   Widget _ingredientPoint(String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -574,94 +563,114 @@ class _HomepageState extends State<Homepage> {
     );
   }
 
- Widget _buildShopByCategory(BuildContext context, bool visible) {
-  final categories = [
-    {'name': 'Serums', 'count': '12 Products', 'image': 'https://www.drsheths.com/cdn/shop/files/1_Website.jpg?v=1746015642'},
-    {'name': 'Moisturizers', 'count': '8 Products', 'image': 'https://vibrantskinbar.com/wp-content/uploads/what-is-moisturizer.jpg'},
-    {'name': 'Cleansers', 'count': '6 Products', 'image': 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?q=80&w=400'},
-    {'name': 'Masks', 'count': '5 Products', 'image': 'https://wowbeauty.co/wp-content/uploads/2023/10/face-mask-web.webp'},
-  ];
+//========================= SHOP BY CATEGORY SECTION WITH HORIZONTAL SCROLL AND ANIMATIONS =========================
+  Widget _buildShopByCategory(BuildContext context, bool visible) {
+    final categories = [
+      {
+        'name': 'Serums',
+        'count': '12 Products',
+        'image':
+            'https://www.drsheths.com/cdn/shop/files/1_Website.jpg?v=1746015642',
+      },
+      {
+        'name': 'Moisturizers',
+        'count': '8 Products',
+        'image':
+            'https://vibrantskinbar.com/wp-content/uploads/what-is-moisturizer.jpg',
+      },
+      {
+        'name': 'Cleansers',
+        'count': '6 Products',
+        'image':
+            'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?q=80&w=400',
+      },
+      {
+        'name': 'Masks',
+        'count': '5 Products',
+        'image':
+            'https://wowbeauty.co/wp-content/uploads/2023/10/face-mask-web.webp',
+      },
+    ];
 
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 40.0), 
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25.0),
-          child: Text(
-            "Shop by Category",
-            style: GoogleFonts.tenorSans(
-              fontSize: 32,
-              fontWeight: FontWeight.w500,
-              color: Colors.black,
-            ),
-          ).animate(target: visible ? 1 : 0).fadeIn().slideX(begin: -0.1),
-        ),
-        const SizedBox(height: 25),
-        SizedBox(
-          height: 180, 
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 25), 
-            itemCount: categories.length,
-            itemBuilder: (context, index) {
-              return Container(
-                width: 150, 
-                margin: const EdgeInsets.only(right: 15), 
-                padding: const EdgeInsets.all(15),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  image: DecorationImage(
-                    image: NetworkImage(categories[index]['image']!),
-                    fit: BoxFit.cover,
-                    colorFilter: ColorFilter.mode(
-                      Colors.black.withOpacity(0.35), 
-                      BlendMode.darken,
-                    ),
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      categories[index]['name']!,
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      categories[index]['count']!,
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: Colors.white.withOpacity(0.8),
-                      ),
-                    ),
-                  ],
-                ),
-              ).animate(target: visible ? 1 : 0)
-               .fadeIn(delay: (100 * index).ms)
-               .moveX(begin: 20, end: 0); // Subtle staggered slide-in
-            },
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 25.0),
+            child: Text(
+              "Shop by Category",
+              style: GoogleFonts.tenorSans(
+                fontSize: 32,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
+            ).animate(target: visible ? 1 : 0).fadeIn().slideX(begin: -0.1),
           ),
-        ),
-      ],
-    ),
-  );
+          const SizedBox(height: 25),
+          SizedBox(
+            height: 180,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 25),
+              itemCount: categories.length,
+              itemBuilder: (context, index) {
+                return Container(
+                      width: 150,
+                      margin: const EdgeInsets.only(right: 15),
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        image: DecorationImage(
+                          image: NetworkImage(categories[index]['image']!),
+                          fit: BoxFit.cover,
+                          colorFilter: ColorFilter.mode(
+                            Colors.black.withOpacity(0.35),
+                            BlendMode.darken,
+                          ),
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            categories[index]['name']!,
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            categories[index]['count']!,
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: Colors.white.withOpacity(0.8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                    .animate(target: visible ? 1 : 0)
+                    .fadeIn(delay: (100 * index).ms)
+                    .moveX(begin: 20, end: 0); // Subtle staggered slide-in
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
-
-
-}
-
+//========================= TOP VERTICAL DRAWER WITH CUSTOM ANIMATIONS AND REAL-TIME CART BADGE =========================
 class TopVerticalDrawer extends StatelessWidget {
   final bool isOpen;
   final VoidCallback onToggle;
-  final Widget child; 
+  final Widget child;
 
   const TopVerticalDrawer({
     super.key,
@@ -681,7 +690,7 @@ class TopVerticalDrawer extends StatelessWidget {
           child: SafeArea(
             child: Column(
               children: [
-                _buildCustomHeader( context),
+                _buildCustomHeader(context),
                 Expanded(child: child),
               ],
             ),
@@ -714,7 +723,6 @@ class TopVerticalDrawer extends StatelessWidget {
               ),
             ),
             child: Column(
-              
               children: [
                 const SizedBox(height: 130),
                 _drawerLink("HOME"),
@@ -743,19 +751,19 @@ class TopVerticalDrawer extends StatelessWidget {
         children: [
           IconButton(
             icon: Icon(isOpen ? Icons.close : Icons.menu_open),
-            onPressed: onToggle, 
+            onPressed: onToggle,
           ),
           Text(
-          'GLOW & FIT',
-          style: GoogleFonts.tenorSans(
-            textStyle: const TextStyle(
-              color: Colors.black,
-              fontSize: 22,
-              letterSpacing: 6,
-              fontWeight: FontWeight.w400,
+            'GLOW & FIT',
+            style: GoogleFonts.tenorSans(
+              textStyle: const TextStyle(
+                color: Colors.black,
+                fontSize: 22,
+                letterSpacing: 6,
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ),
-        ),
           Padding(
             padding: const EdgeInsets.only(right: 15),
             child: IconButton(
@@ -792,20 +800,23 @@ class TopVerticalDrawer extends StatelessWidget {
   Widget _drawerLink(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 15),
-      child: Text(
-        title,
-        style: GoogleFonts.archivo(
-          fontSize: 25,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 3,
-           height: 1.5,
-          
-          
-        ),
-      ).animate(target: isOpen ? 1 : 0).fadeIn(delay: 200.ms).slideX(begin: 0.2),
+      child:
+          Text(
+                title,
+                style: GoogleFonts.archivo(
+                  fontSize: 25,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 3,
+                  height: 1.5,
+                ),
+              )
+              .animate(target: isOpen ? 1 : 0)
+              .fadeIn(delay: 200.ms)
+              .slideX(begin: 0.2),
     );
   }
 }
+
 class _LoadingList extends StatelessWidget {
   const _LoadingList();
 

@@ -24,7 +24,7 @@ class _SearchpageState extends State<Searchpage> {
     _fetchFilteredProducts(); 
   }
 
-  // Handles Category Selection
+  //=====================FILTER & SEARCH LOGIC=====================//
   void _fetchFilteredProducts({int? categoryId}) {
     setState(() {
       _selectedCategoryId = categoryId;
@@ -35,7 +35,7 @@ class _SearchpageState extends State<Searchpage> {
     });
   }
 
-  // Handles Custom Search (Name, Salt, Brand)
+// ======================= HANDELS CUSTOM SEARCH QUERIES ====================== //
   void _performSearch(String query) {
     if (query.isEmpty) {
       _fetchFilteredProducts(categoryId: _selectedCategoryId);
@@ -70,6 +70,7 @@ class _SearchpageState extends State<Searchpage> {
               ),
               const SizedBox(height: 30),
               // SEARCH FIELD
+              
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: TextField(
@@ -86,8 +87,10 @@ class _SearchpageState extends State<Searchpage> {
               // ActionChoiceExample(
               //   onCategorySelected: (id) => _fetchFilteredProducts(categoryId: id),
               // ),
-              const SizedBox(height: 40),
-              // RESULT COUNTER
+
+           
+          
+            //=====================ITEM COUNT=====================//
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: Text(
@@ -100,7 +103,8 @@ class _SearchpageState extends State<Searchpage> {
                   ),
                 ),
               ),
-              // PRODUCT GRID
+
+            //===================== PRODUCT GRID ====================//
               FutureBuilder<List<Productsmodel>>(
                 future: _productsFuture,
                 builder: (context, snapshot) {

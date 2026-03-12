@@ -16,16 +16,13 @@ class _MobileLoginState extends State<MobileLogin> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _otpController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
   String _verificationId = "";
   bool _isOtpSent = false;
   bool _isLoading = false;
-
-  // Colors for a modern E-commerce vibe
   final Color primaryColor = const Color(0xFF6366F1); // Modern Indigo
   final Color secondaryColor = const Color(0xFFF1F5F9); // Light Slate
 
-  // --- Logic remains untouched as per request ---
+//===============================OTP SENDING LOGIC===============================
   Future<void> _sendOtp() async {
     setState(() => _isLoading = true);
     final String fullPhoneNumber = "+91${_phoneController.text.trim()}";
@@ -58,7 +55,8 @@ class _MobileLoginState extends State<MobileLogin> {
       setState(() => _isLoading = false);
     }
   }
-
+  
+//===============================OPT VERIFICATION LOGIC===============================
   Future<void> _verifyOtp() async {
     setState(() => _isLoading = true);
     try {
@@ -81,6 +79,7 @@ class _MobileLoginState extends State<MobileLogin> {
     context.go('/home', extra: int.parse(categoryId));
   }
 
+//============================ UI BUILD METHOD WITH MODERN DESIGN ==============================
   @override
   Widget build(BuildContext context) {
     return Scaffold(

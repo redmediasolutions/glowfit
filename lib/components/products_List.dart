@@ -2,8 +2,6 @@ import 'package:glowfit/models/product_model.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-
-
 class ProductsList extends StatefulWidget {
   final String? id;
   final String? imageUrl;
@@ -28,9 +26,6 @@ class ProductsList extends StatefulWidget {
 }
 
 class _ProductsListState extends State<ProductsList> {
-  //==================ADD TO CART==========================
-
- 
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -96,93 +91,7 @@ class _ProductsListState extends State<ProductsList> {
                           color: Colors.black,
                         ),
                       ),
-            //           CircleAvatar(
-            //             radius: 20,
-            //             backgroundColor: Colors.amber,
-            //             child: IconButton(
-            //               onPressed: () async{
-            //                   try {
-            //   print('➡️ Add to cart clicked');
-
-             
-            //   if (widget.product.canAddToCart) {
-            //     print('⛔ Product not allowed in cart');
-            //     return;
-            //   }
-            //   final user = FirebaseAuth.instance.currentUser;
-
-            //   /// 🔐 Guest → show login
-            //   if (user == null || user.isAnonymous) {
-            //     await showModalBottomSheet(
-            //       context: context,
-            //       isScrollControlled: true,
-            //       backgroundColor: Colors.transparent,
-            //       enableDrag: false,
-            //       builder: (context) {
-            //         return Padding(
-            //           padding: MediaQuery.viewInsetsOf(context),
-            //           child: EmailLoginPage(),
-            //         );
-            //       },
-            //     );
-            //     return;
-            //   }
-
-            //   final String uid = user.uid;
-            //   // final String uid = user.uid;
-            //   final String productId = widget.product.id.toString();
-
-            //   final cartItemRef = FirebaseFirestore.instance
-            //       .collection('carts')
-            //       .doc(uid)
-            //       .collection('items')
-            //       .doc(productId);
-
-            //   final cartSnap = await cartItemRef.get();
-
-            //   final double parsedSalePrice =
-            //       widget.product.salePrice ?? widget.product.regularPrice ?? 0.0;
-
-            //   if (cartSnap.exists) {
-            //     /// ➕ Increment
-            //     await cartItemRef.update({
-            //       'quantity': FieldValue.increment(1),
-            //       'updatedAt': FieldValue.serverTimestamp(),
-            //     });
-            //   } else {
-            //     /// 🆕 Create
-            //     await cartItemRef.set({
-            //       'productId':  widget.product.id,
-            //       'image': widget.product.image,
-            //       'name': widget.product.name,
-            //       'brand': widget.product.brand,
-            //       // 'packing': widget.product.packing,
-            //       'mrp': widget.product.regularPrice,
-            //       'salePrice': parsedSalePrice,
-            //       'quantity': 1,
-            //       'addedBy': 'user',
-            //       'createdAt': FieldValue.serverTimestamp(),
-            //       'updatedAt': FieldValue.serverTimestamp(),
-            //     });
-            //   }
-
-            //   if (context.mounted) {
-            //     ScaffoldMessenger.of(
-            //       context,
-            //     ).showSnackBar(const SnackBar(content: Text('Added to cart')));
-            //   }
-            // } catch (e, stack) {
-            //   print('❌ Add to cart error: $e');
-            //   print(stack);
-            // }
           
-                           
-            //               },
-            //               icon: Icon(Icons.add),
-            //               color: Colors.black,
-            //               iconSize: 20,
-            //             ),
-            //           ),
                     ],
                   ),
                 ],

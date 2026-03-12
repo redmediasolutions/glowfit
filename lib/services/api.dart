@@ -17,7 +17,7 @@ class APIService {
   static Map<String, String> getPublicHeaders() {
     return {'Content-Type': 'application/json'};
   }
-
+//======================= FETCH PRODUCTS BY CATEGORY FUNCTION =======================
   static Future<List<Productsmodel>> fetchProductsByCategory({
     required String
     categoryId, // Ensure this is a numeric ID string, e.g., "15"
@@ -60,7 +60,7 @@ class APIService {
     }
     return [];
   }
-
+//======================= FETCH PRODUCTS FUNCTION =======================
   static Future<List<Productsmodel>> fetchProducts({
     int page = 1,
     int perPage = 33,
@@ -104,7 +104,7 @@ class APIService {
 
     return [];
   }
-
+//======================= FETCH SINGLE PRODUCT DETAIL FUNCTION =======================
   static Future<ProductDetail?> fetchSingleProductDetail(
     String productId,
   ) async {
@@ -126,7 +126,7 @@ class APIService {
 
     return null;
   }
-
+///======================= FETCH PRODUCTS BY IDS FUNCTION =======================
   static Future<List<Productsmodel>> fetchProductsByIds(
     List<int> productIds,
   ) async {
@@ -157,7 +157,7 @@ class APIService {
     return [];
   }
 
-
+//======================= SEARCH FUNCTION =======================
  Future<List<Productsmodel>> searchProducts(String query) async {
   final uri = Uri.https(
     "gs.redmediasolutions.in",

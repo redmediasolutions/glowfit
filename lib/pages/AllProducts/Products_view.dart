@@ -23,14 +23,14 @@ Widget scrollTriggered(Widget child, String key) {
     child: ValueListenableBuilder<bool>(
       valueListenable: isVisible,
       builder: (context, visible, _) {
-        // If not visible, return the child with 0 opacity to avoid flicker
-        // If visible, play the animation
         return visible ? child : Opacity(opacity: 0, child: child);
       },
     ),
   );
 }
+
 final CarouselSliderController _carouselController = CarouselSliderController();
+
 class ProductsView extends StatefulWidget {
   final Productsmodel product;
   const ProductsView({super.key, required this.product});
@@ -61,6 +61,7 @@ class _ProductsViewState extends State<ProductsView> {
     final p = widget.product;
 
     return Scaffold(
+      
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -71,8 +72,9 @@ class _ProductsViewState extends State<ProductsView> {
           },
           icon: Icon(Icons.arrow_back_ios),
         ),
+
         title: Text(
-          'GLOW & FIT',
+          'GladSkin',
           style: GoogleFonts.tenorSans(
             textStyle: const TextStyle(
               color: Colors.black,
@@ -86,12 +88,13 @@ class _ProductsViewState extends State<ProductsView> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
+
+        //========================== ADD TO CART BUTTON FUNCTION =========================
         child: GestureDetector(
           onTap: () async {
             try {
               print('➡️ Add to cart clicked');
 
-             
               if (!p.canAddToCart) {
                 print('⛔ Product not allowed in cart');
                 return;
@@ -116,7 +119,6 @@ class _ProductsViewState extends State<ProductsView> {
               }
 
               final String uid = user.uid;
-              // final String uid = user.uid;
               final String productId = p.id.toString();
 
               final cartItemRef = FirebaseFirestore.instance
@@ -236,113 +238,116 @@ class _ProductsViewState extends State<ProductsView> {
     );
   }
 
+  Widget _buildHeroSection(BuildContext context, Productsmodel p) {
+    // Combine main image and gallery images into one list
+    final List<String> allImages = [
+      p.image ?? '',
+      ...p.galleryImages,
+    ].where((img) => img.isNotEmpty).toList();
 
-
-Widget _buildHeroSection(BuildContext context, Productsmodel p) {
-  // Combine main image and gallery images into one list
-  final List<String> allImages = [p.image ?? '', ...p.galleryImages]
-      .where((img) => img.isNotEmpty)
-      .toList();
-
-  return Stack(
-    children: [
-      // --- Full Screen Carousel ---
-      CarouselSlider(
-        carouselController: _carouselController,
-        options: CarouselOptions(
-          height: 600,
-          viewportFraction: 1.0, // Ensures the image takes full width
-          enlargeCenterPage: false,
-          enableInfiniteScroll: allImages.length > 1, 
-          autoPlay: false, // Set to true if you want it to slide automatically
-          onPageChanged: (index, reason) {
-            setState(() {
-              selectedImage = allImages[index];
-            });
-          },
+    return Stack(
+      children: [
+      //=========================== IMAGE CAROUSEL SECTION =========================
+        CarouselSlider(
+          carouselController: _carouselController,
+          options: CarouselOptions(
+            height: 600,
+            viewportFraction: 1.0, 
+            enlargeCenterPage: false,
+            enableInfiniteScroll: allImages.length > 1,
+            autoPlay:
+                false, 
+            onPageChanged: (index, reason) {
+              setState(() {
+                selectedImage = allImages[index];
+              });
+            },
+          ),
+          items: allImages.map((imageUrl) {
+            return Container(
+              width: MediaQuery.of(context).size.width,
+              color: const Color(
+                0xFFF5F5F7,
+              ), 
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.contain,
+                height: 100,
+                width: 200, 
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.broken_image, size: 50),
+              ).animate().fadeIn(duration: 800.ms),
+            );
+          }).toList(),
         ),
-        items: allImages.map((imageUrl) {
-          return Container(
-            width: MediaQuery.of(context).size.width,
-            color: const Color(0xFFF5F5F7), // Light grey background for product shots
-            child: Image.network(
-              imageUrl,
-              fit: BoxFit.contain,
-              height: 100, 
-              width: 200,// Use cover if you want it to fill the 600 height
-              errorBuilder: (context, error, stackTrace) => 
-                  const Icon(Icons.broken_image, size: 50),
-            ).animate().fadeIn(duration: 800.ms),
-          );
-        }).toList(),
-      ),
 
-      // --- Modern Page Indicators (The "Dots") ---
-      if (allImages.length > 1)
+      
+        if (allImages.length > 1)
+          Positioned(
+            top: 550,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: allImages.asMap().entries.map((entry) {
+                return Container(
+                  width: 8.0,
+                  height: 8.0,
+                  margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: selectedImage == entry.value
+                        ? Colors.black
+                        : Colors.black.withOpacity(0.2),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+
+        // --- Product Info Overlay ---
         Positioned(
-          top: 550, // Positioned just above the text area
-          left: 0,
-          right: 0,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: allImages.asMap().entries.map((entry) {
-              return Container(
-                width: 8.0,
-                height: 8.0,
-                margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: selectedImage == entry.value
-                      ? Colors.black
-                      : Colors.black.withOpacity(0.2),
+          bottom: 30,
+          left: 25,
+          right: 25,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                p.categories.toUpperCase(),
+                style: GoogleFonts.inter(
+                  letterSpacing: 3,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black45,
                 ),
-              );
-            }).toList(),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                p.name,
+                style: GoogleFonts.tenorSans(
+                  fontSize: 26,
+                  height: 1.1,
+                  color: Colors.black,
+                ),
+              ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.1, end: 0),
+              const SizedBox(height: 12),
+              Text(
+                "₹ ${p.salePrice}",
+                style: GoogleFonts.tenorSans(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ],
           ),
         ),
+      ],
+    );
+  }
 
-      // --- Product Info Overlay ---
-      Positioned(
-        bottom: 30,
-        left: 25,
-        right: 25,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              p.categories.toUpperCase(),
-              style: GoogleFonts.inter(
-                letterSpacing: 3,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.black45,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              p.name,
-              style: GoogleFonts.tenorSans(
-                fontSize: 26,
-                height: 1.1,
-                color: Colors.black,
-              ),
-            ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.1, end: 0),
-            const SizedBox(height: 12),
-            Text(
-              "₹ ${p.salePrice}",
-              style: GoogleFonts.tenorSans(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-          ],
-        ),
-      ),
-    ],
-  );
-}
-  
+  //========================== PRODUCT DETAILS SECTION =========================
   Widget _productdetails(BuildContext context, Productsmodel p) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
@@ -354,7 +359,7 @@ Widget _buildHeroSection(BuildContext context, Productsmodel p) {
             children: [
               Text(
                 'Composition : -',
-                textAlign: TextAlign.left, // Added for better centering
+                textAlign: TextAlign.left,
                 style: GoogleFonts.tenorSans(fontSize: 20, color: Colors.black),
               ),
               Expanded(
@@ -382,10 +387,10 @@ Widget _buildHeroSection(BuildContext context, Productsmodel p) {
               ),
               Text(
                 p.packagesize ?? '',
-                textAlign: TextAlign.justify, // Ensures the block is centered
+                textAlign: TextAlign.justify, 
                 style: GoogleFonts.inter(
                   fontSize: 16,
-                  height: 1.5, // Improved readability
+                  height: 1.5,
                   color: Colors.black45,
                 ),
               ),
@@ -416,6 +421,7 @@ Widget _buildHeroSection(BuildContext context, Productsmodel p) {
     );
   }
 
+  //========================== DESCRIPTION SECTION =========================
   Widget _description(BuildContext context, Productsmodel p) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25),
@@ -424,7 +430,7 @@ Widget _buildHeroSection(BuildContext context, Productsmodel p) {
         children: [
           Text(
             'DESCRIPTION',
-            textAlign: TextAlign.left, // Added for better centering
+            textAlign: TextAlign.left, 
             style: GoogleFonts.tenorSans(
               fontSize: 20,
               height: 1.1,
@@ -434,10 +440,10 @@ Widget _buildHeroSection(BuildContext context, Productsmodel p) {
           const SizedBox(height: 20),
           Text(
             p.description.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ''),
-            textAlign: TextAlign.justify, // Ensures the block is centered
+            textAlign: TextAlign.justify, 
             style: GoogleFonts.inter(
               fontSize: 16,
-              height: 1.5, // Improved readability
+              height: 1.5, 
               color: Colors.black45,
             ),
           ),
@@ -446,10 +452,11 @@ Widget _buildHeroSection(BuildContext context, Productsmodel p) {
     );
   }
 
+  //========================== IMAGE SECTION =========================
   Widget _image(BuildContext context, Productsmodel p) {
     return Container(
-      // Removed height: double.infinity and margin
-      padding: const EdgeInsets.symmetric(vertical: 40), // Controlled spacing
+   
+      padding: const EdgeInsets.symmetric(vertical: 40),
       child: Center(
         child: Image.network(
           p.image ?? 'https://via.placeholder.com/380',
@@ -460,18 +467,12 @@ Widget _buildHeroSection(BuildContext context, Productsmodel p) {
     );
   }
 
-  // 1. KEY INGREDIENTS SECTION
+  //==========================SIDE EFFECTS SECTION =========================
   Widget _buildKeyIngredients(BuildContext context, Productsmodel p) {
-    // 1. Check if the content is null or just empty whitespace
     final String content = p.sideeeffects?.trim() ?? '';
-
-    // 2. If no content exists, return an empty box (deletes the white space)
     if (content.isEmpty) {
       return const SizedBox.shrink();
     }
-
-    // 3. If you have multiple side effects separated by commas or newlines,
-    // you can split them into a list. Otherwise, keep it as a single-item list.
     final List<String> ingredients = [content];
 
     return Padding(
@@ -494,7 +495,7 @@ Widget _buildHeroSection(BuildContext context, Productsmodel p) {
               children: [
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  // Using a smaller, cleaner bullet point
+                
                   leading: const Padding(
                     padding: EdgeInsets.only(top: 8.0),
                     child: Icon(Icons.circle, size: 6, color: Colors.black),
@@ -504,7 +505,7 @@ Widget _buildHeroSection(BuildContext context, Productsmodel p) {
                     style: GoogleFonts.inter(
                       fontSize: 15,
                       fontWeight: FontWeight.w400,
-                      height: 1.4, // Better line height for readability
+                      height: 1.4, 
                     ),
                   ),
                 ),
@@ -517,32 +518,32 @@ Widget _buildHeroSection(BuildContext context, Productsmodel p) {
     );
   }
 
+  //========================== IMAGE SECTION =========================
   Widget _buildImageSection(BuildContext context, Productsmodel p) {
     final double sectionHeight = MediaQuery.of(context).size.height * 0.8;
-
     return SizedBox(
       height: sectionHeight,
       width: double.infinity,
       child: Stack(
         children: [
           Positioned.fill(
-  child: Container(
-    color: Colors.transparent,
-    child: Image.network(
-      p.image ?? 'https://via.placeholder.com/380',
-      cacheWidth: 400, 
-      fit: BoxFit.contain,
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) return child;
-        return const Center(child: CircularProgressIndicator(strokeWidth: 2));
-      },
-
-      errorBuilder: (context, error, stackTrace) => const Icon(Icons.error),
-    ).animate().fadeIn(duration: 1200.ms),
-  ),
-),
-
-        
+            child: Container(
+              color: Colors.transparent,
+              child: Image.network(
+                p.image ?? 'https://via.placeholder.com/380',
+                cacheWidth: 400,
+                fit: BoxFit.contain,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.error),
+              ).animate().fadeIn(duration: 1200.ms),
+            ),
+          ),
 
           Positioned(
             bottom: 50,
@@ -581,7 +582,7 @@ Widget _buildHeroSection(BuildContext context, Productsmodel p) {
     );
   }
 
-  // 2. HOW TO USE & VOLUME SECTION
+  //========================== HOW DOES IT WORK & VOLUME SECTION =========================
   Widget _buildUsageAndVolume(BuildContext context, Productsmodel p) {
     // 1. Clean the content and check if it exists
     final String workingContent = p.working?.trim() ?? '';
@@ -606,15 +607,13 @@ Widget _buildHeroSection(BuildContext context, Productsmodel p) {
             Text(
               workingContent,
               style: GoogleFonts.inter(
-                fontSize: 16, // Reduced slightly for better body text feel
+                fontSize: 16,
                 height: 1.6,
                 color: Colors.black87,
               ),
             ),
             const SizedBox(height: 30),
           ],
-
-          // 3. Static Volume Section (Always shows unless you make it dynamic)
           const Divider(thickness: 0.5, color: Color(0xFFEEEEEE)),
           const SizedBox(height: 20),
         ],

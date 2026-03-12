@@ -43,11 +43,9 @@ class Productsmodel {
     String? brandValue =
         json['name'] ?? json['manufacturer'] ?? json['brands'] ?? '';
 
-    String? compositionValue =
-        json['composition_meta']?.toString() ?? json['composition']?.toString();
+    String? compositionValue =json['composition_meta']?.toString() ?? json['composition']?.toString();
 
-    String? packageValue =
-        json['package_meta']?.toString() ?? json['package']?.toString();
+    String? packageValue =json['package_meta']?.toString() ?? json['package']?.toString();
 
     // 2. BRANDS ARRAY (For plugin data like Steris)
     if (json['brands'] is List && (json['brands'] as List).isNotEmpty) {
@@ -126,9 +124,8 @@ class Productsmodel {
       categories: categoryName,
       sideeeffects: sideffects,
       working: howdoesitwork,
-      manufactured: brandValue, // Assigned from the top-level or brand array
-      brand: brandValue, // Assigned for general usage
-      composition: compositionValue,
+      manufactured: brandValue,
+      brand: brandValue, 
       packagesize: packageValue,
       image: galleryImages.isNotEmpty ? galleryImages.first : null,
       galleryImages: galleryImages,
