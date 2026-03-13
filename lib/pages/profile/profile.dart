@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:glowfit/Auth/mobilelogin.dart';
+import 'package:gladskin/Auth/mobilelogin.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class Profile extends StatelessWidget {

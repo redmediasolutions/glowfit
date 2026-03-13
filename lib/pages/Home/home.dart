@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:glowfit/components/products_List.dart';
-import 'package:glowfit/models/cartitem.dart';
-import 'package:glowfit/models/product_model.dart';
-import 'package:glowfit/pages/cart/cart_Page.dart';
-import 'package:glowfit/services/api.dart';
+import 'package:gladskin/components/products_List.dart';
+import 'package:gladskin/models/cartitem.dart';
+import 'package:gladskin/models/product_model.dart';
+import 'package:gladskin/pages/cart/cart_Page.dart';
+import 'package:gladskin/services/api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
