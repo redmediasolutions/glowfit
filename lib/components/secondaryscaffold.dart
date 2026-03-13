@@ -16,7 +16,7 @@ class Secondaryscaffold extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          'GladSkins',
+          'GladSkin',
           style: GoogleFonts.tenorSans(
             textStyle: const TextStyle(
               color: Colors.black,

@@ -126,6 +126,7 @@ class Productsmodel {
       working: howdoesitwork,
       manufactured: brandValue,
       brand: brandValue, 
+      composition: compositionValue,
       packagesize: packageValue,
       image: galleryImages.isNotEmpty ? galleryImages.first : null,
       galleryImages: galleryImages,

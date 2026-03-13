@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:glowfit/Auth/mobilelogin.dart';
@@ -81,6 +82,29 @@ class Profile extends StatelessWidget {
                     ),
                     child: Text(
                       "SIGN OUT",
+                      style: GoogleFonts.inter(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                 SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      
+                      Navigator.push(context,MaterialPageRoute(builder: (context)=>MobileLogin()) );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      side: const BorderSide(color: Color(0xFFEEEEEE)),
+                      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                    ),
+                    child: Text(
+                      " DELETE ACCOUNT",
                       style: GoogleFonts.inter(
                         color: Colors.black,
                         fontWeight: FontWeight.w600,
@@ -221,4 +245,34 @@ class Profile extends StatelessWidget {
       ],
     );
   }
+
+//===================Acount Deletion Logic===================
+  Future<void> _deleteUserAccount(BuildContext context) async {
+  try {
+    // 1. Get the current user
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      // 2. Delete the user from the Auth service
+      await user.delete();
+
+      // 3. Navigate away to the login screen
+      if (context.mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const MobileLogin()),
+          (route) => false, // Clears the navigation stack
+        );
+      }
+    }
+  } on FirebaseAuthException catch (e) {
+    if (e.code == 'requires-recent-login') {
+      // Security measure: The user must have logged in recently to delete their account
+      print('The user must re-authenticate before this operation can be executed.');
+    }
+  } catch (e) {
+    print("Error deleting account: $e");
+  }
 }
+}
+
