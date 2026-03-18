@@ -309,7 +309,10 @@ double taxRate = (subtotal + shipping) * 0.05;
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    _quantityBtn(Icons.remove, onDecrement),
+                    _quantityBtn(
+                      quantity <= 1 ? Icons.delete_outline : Icons.remove,
+                      quantity <= 1 ? onRemove : onDecrement,
+                    ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15),
                       child: Text(

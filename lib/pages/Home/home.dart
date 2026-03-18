@@ -79,6 +79,7 @@ class _HomepageState extends State<Homepage> {
             ),
           ),
         ),
+
         //===================== CART ICON WITH REAL-TIME BADGE UPDATES =====================
         actions: [
           Padding(
@@ -91,13 +92,17 @@ class _HomepageState extends State<Homepage> {
                   .collection('items')
                   .snapshots(),
               builder: (context, snapshot) {
-                // 2. Calculate the total quantity from the snapshot
+                // 2. Count distinct items (not total quantity)
                 int totalItems = 0;
                 if (snapshot.hasData) {
+                  final Set<String> uniqueIds = {};
                   for (var doc in snapshot.data!.docs) {
                     final data = doc.data() as Map<String, dynamic>;
-                    totalItems += (data['quantity'] ?? 0) as int;
+                    final String id =
+                        (data['productId'] ?? doc.id).toString();
+                    uniqueIds.add(id);
                   }
+                  totalItems = uniqueIds.length;
                 }
 
                 return IconButton(
@@ -775,9 +780,12 @@ class TopVerticalDrawer extends StatelessWidget {
               },
               icon: Badge(
                 label: Text(
-                  // Calculates total quantity of all items in the cart
+                  // Count distinct items (not total quantity)
                   globalCart
-                      .fold(0, (sum, item) => sum + item.quantity)
+                      .map((item) =>
+                          '${item.name}|${item.price}|${item.imageUrl}')
+                      .toSet()
+                      .length
                       .toString(),
                   style: const TextStyle(color: Colors.white, fontSize: 12),
                 ),

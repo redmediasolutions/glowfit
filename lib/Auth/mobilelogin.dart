@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
@@ -22,6 +23,21 @@ class _MobileLoginState extends State<MobileLogin> {
   final Color primaryColor = const Color(0xFF6366F1); // Modern Indigo
   final Color secondaryColor = const Color(0xFFF1F5F9); // Light Slate
 
+
+//================================ save user to firestore after successful login ================================
+Future<void> _saveUserToFirestore(User user) async {
+  final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+  await userDoc.set({
+    'uid': user.uid,
+    'phoneNumber': user.phoneNumber,
+    'lastLogin': FieldValue.serverTimestamp(),
+    // We set these as empty if it's a new user, 
+    // so the Profile page can fetch them later
+    'full_name': user.displayName ?? "", 
+    'createdAt': FieldValue.serverTimestamp(),
+  }, SetOptions(merge: true));
+}
 //===============================OTP SENDING LOGIC===============================
   Future<void> _sendOtp() async {
     setState(() => _isLoading = true);
@@ -29,10 +45,13 @@ class _MobileLoginState extends State<MobileLogin> {
     try {
       await _auth.verifyPhoneNumber(
         phoneNumber:fullPhoneNumber,
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          await _auth.signInWithCredential(credential);
-          _navigateToHome();
-        },
+      verificationCompleted: (PhoneAuthCredential credential) async {
+  UserCredential userCredential = await _auth.signInWithCredential(credential);
+  if (userCredential.user != null) {
+    await _saveUserToFirestore(userCredential.user!);
+  }
+  _navigateToHome();
+},
         verificationFailed: (FirebaseAuthException e) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Verification Failed: ${e.message}")),
@@ -57,24 +76,40 @@ class _MobileLoginState extends State<MobileLogin> {
   }
   
 //===============================OPT VERIFICATION LOGIC===============================
-  Future<void> _verifyOtp() async {
-    setState(() => _isLoading = true);
-    try {
-      PhoneAuthCredential credential = PhoneAuthProvider.credential(
-        verificationId: _verificationId,
-        smsCode: _otpController.text.trim(),
+Future<void> _verifyOtp() async {
+  setState(() => _isLoading = true);
+  try {
+    PhoneAuthCredential credential = PhoneAuthProvider.credential(
+      verificationId: _verificationId,
+      smsCode: _otpController.text.trim(),
+    );
+
+    UserCredential userCredential = await _auth.signInWithCredential(credential);
+
+    // 1. SAVE TO FIRESTORE
+    if (userCredential.user != null) {
+      await _saveUserToFirestore(userCredential.user!);
+    }
+
+    // 2. THE FIX: Check if the widget is still mounted before using context
+    if (!mounted) return; 
+
+    _navigateToHome();
+    
+  } catch (e) {
+    // 3. THE FIX: Check here too before showing a SnackBar
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Invalid OTP. Try again.")),
       );
-      await _auth.signInWithCredential(credential);
-      _navigateToHome();
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Invalid OTP. Try again.")));
-    } finally {
+    }
+  } finally {
+    // 4. THE FIX: Check before calling setState
+    if (mounted) {
       setState(() => _isLoading = false);
     }
   }
-
+}
   void _navigateToHome() {
     context.go('/home', extra: int.parse(categoryId));
   }

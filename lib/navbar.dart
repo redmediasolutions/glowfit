@@ -10,41 +10,45 @@ import 'package:gladskin/pages/Search/searchPage.dart';
 import 'package:gladskin/pages/profile/profile.dart';
 import 'package:gladskin/pages/splashscreen.dart';
 import 'package:gladskin/shell.dart';
-
 import 'package:go_router/go_router.dart';
 
-
-
-final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
-
 class AppRouter {
+  static final AuthStateNotifier authStateNotifier = AuthStateNotifier();
+
+  /// ROOT NAVIGATOR
   static final GlobalKey<NavigatorState> rootNavigatorKey =
       GlobalKey<NavigatorState>();
 
+  /// ROUTER
   static final GoRouter router = GoRouter(
     navigatorKey: rootNavigatorKey,
-    initialLocation: '/login',
 
-    /// helps debug routing
-    debugLogDiagnostics: true,
+    /// Start from splash to wait for auth state restoration
+    initialLocation: '/splash',
 
-    /// refresh when firebase auth changes
-    refreshListenable: GoRouterRefreshStream(
-      FirebaseAuth.instance.authStateChanges(),
-    ),
+    /// Refresh router when auth changes
+    refreshListenable: authStateNotifier,
 
     /// AUTH REDIRECT
     redirect: (context, state) {
-      final user = FirebaseAuth.instance.currentUser;
-      final isLoginPage = state.matchedLocation == '/login';
+      final bool isInitialized = authStateNotifier.isInitialized;
+      final user = authStateNotifier.user;
 
-      /// If not logged in → go to login
+      final isLoginPage = state.matchedLocation == '/login';
+      final isSplashPage = state.matchedLocation == '/splash';
+
+      /// Wait for FirebaseAuth to restore the session
+      if (!isInitialized) {
+        return isSplashPage ? null : '/splash';
+      }
+
+      /// If NOT logged in → go to login
       if (user == null) {
         return isLoginPage ? null : '/login';
       }
 
-      /// If logged in and on login page → go to home
-      if (isLoginPage) {
+      /// If logged in and trying to open login or splash → go home
+      if ((isLoginPage || isSplashPage)) {
         return '/home';
       }
 
@@ -52,25 +56,32 @@ class AppRouter {
     },
 
     routes: [
-      /// LOGIN PAGE (outside bottom nav)
+
+      /// SPLASH
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SuccessSplashScreen(),
+      ),
+
+      /// LOGIN PAGE
       GoRoute(
         path: '/login',
         builder: (context, state) => const MobileLogin(),
       ),
-GoRoute(
-        path: '/splash',
-        builder: (context, state) => const SuccessSplashScreen(),
-      ),
-      /// PRODUCT VIEW (outside shell)
+
+      /// PRODUCT VIEW (outside bottom nav)
       GoRoute(
         path: '/productview',
         builder: (context, state) {
+
           if (state.extra is Productsmodel) {
             return ProductsView(product: state.extra as Productsmodel);
           }
 
           return const Scaffold(
-            body: Center(child: Text("Product data missing")),
+            body: Center(
+              child: Text("Product data missing"),
+            ),
           );
         },
       ),
@@ -81,17 +92,18 @@ GoRoute(
           return ShellPage(child: child);
         },
         routes: [
+
           /// HOME
-      /// HOME
-GoRoute(
-  path: '/home',
-  builder: (context, state) {
-    // Check if extra is an int, otherwise default to a safe value like 0
-    final int categoryId = (state.extra is int) ? (state.extra as int) : 0;
-    
-    return Homepage(categoryId: categoryId.toString());
-  },
-),
+          GoRoute(
+            path: '/home',
+            builder: (context, state) {
+
+              final int categoryId =
+                  (state.extra is int) ? state.extra as int : 0;
+
+              return Homepage(categoryId: categoryId.toString());
+            },
+          ),
 
           /// ALL PRODUCTS
           GoRoute(
@@ -116,13 +128,25 @@ GoRoute(
   );
 }
 
-/// REFRESH ROUTER WHEN AUTH STATE CHANGES
-class GoRouterRefreshStream extends ChangeNotifier {
-  GoRouterRefreshStream(Stream<dynamic> stream) {
-    _subscription = stream.listen((_) => notifyListeners());
+/// AUTH STATE NOTIFIER (so we can wait for the first auth event)
+class AuthStateNotifier extends ChangeNotifier {
+  AuthStateNotifier() {
+    _subscription = FirebaseAuth.instance.authStateChanges().listen((user) {
+      _user = user;
+      if (!_isInitialized) {
+        _isInitialized = true;
+      }
+      notifyListeners();
+    });
   }
 
-  late final StreamSubscription<dynamic> _subscription;
+  bool _isInitialized = false;
+  User? _user;
+
+  bool get isInitialized => _isInitialized;
+  User? get user => _user;
+
+  late final StreamSubscription<User?> _subscription;
 
   @override
   void dispose() {

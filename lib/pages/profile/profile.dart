@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gladskin/Auth/mobilelogin.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class Profile extends StatelessWidget {
@@ -27,17 +29,43 @@ class Profile extends StatelessWidget {
                     fontWeight: FontWeight.w400,
                   ),
                 ),
-              
+
+                const SizedBox(height: 10),
+                FutureBuilder<String>(
+                  future: _getUserName(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Text("Loading...");
+                    } else if (snapshot.hasError) {
+                      return const Text("Error loading name");
+                    } else {
+                      return Text(
+                        snapshot.data!.toUpperCase(),
+                        style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[700],
+                          letterSpacing: 1.5,
+                        ),
+                      );
+                    }
+                  },
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  "Manage your account, orders, and preferences",
+                  style: GoogleFonts.inter(
+                    color: Colors.black45,
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
+                ),
                 const SizedBox(height: 35),
 
                 // --- Quick Stats Row ---
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildStatItem("12", "ORDERS"),
-                    _buildStatItem("24", "WISHLIST"),
-                    _buildStatItem("8", "REVIEWS"),
-                  ],
+                  children: [_buildStatItem("12", "ORDERS")],
                 ),
                 const SizedBox(height: 25),
 
@@ -54,9 +82,17 @@ class Profile extends StatelessWidget {
                   mainAxisSpacing: 15,
                   childAspectRatio: 1.1,
                   children: [
-                    _buildGridTile(Icons.inventory_2_outlined, "Order History", "3 ACTIVE"),
+                    _buildGridTile(
+                      Icons.inventory_2_outlined,
+                      "Order History",
+                      "3 ACTIVE",
+                    ),
                     _buildGridTile(Icons.favorite_border, "Saved Items", "24"),
-                    _buildGridTile(Icons.credit_card_outlined, "Payment Methods", ""),
+                    _buildGridTile(
+                      Icons.credit_card_outlined,
+                      "Payment Methods",
+                      "",
+                    ),
                     _buildGridTile(Icons.settings_outlined, "Settings", ""),
                   ],
                 ),
@@ -72,13 +108,40 @@ class Profile extends StatelessWidget {
                   width: double.infinity,
                   child: OutlinedButton(
                     onPressed: () {
-                     // context.push('/login'); 
-                      Navigator.push(context,MaterialPageRoute(builder: (context)=>MobileLogin()) );
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text("Sign Out"),
+                          content: const Text(
+                            "Are you sure you want to log out?",
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text("CANCEL"),
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                await FirebaseAuth.instance.signOut();
+                                if (context.mounted) {
+                                  context.go('/login');
+                                }
+                              },
+                              child: const Text(
+                                "LOGOUT",
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
                     },
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 20),
                       side: const BorderSide(color: Color(0xFFEEEEEE)),
-                      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
+                      ),
                     ),
                     child: Text(
                       "SIGN OUT",
@@ -91,20 +154,25 @@ class Profile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-                 SizedBox(
+                SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
                     onPressed: () {
-                      
-                      Navigator.push(context,MaterialPageRoute(builder: (context)=>MobileLogin()) );
+                      _deleteUserAccount(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => MobileLogin()),
+                      );
                     },
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 20),
                       side: const BorderSide(color: Color(0xFFEEEEEE)),
-                      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
+                      ),
                     ),
                     child: Text(
-                      " DELETE ACCOUNT",
+                      "DELETE ACCOUNT",
                       style: GoogleFonts.inter(
                         color: Colors.black,
                         fontWeight: FontWeight.w600,
@@ -134,7 +202,14 @@ class Profile extends StatelessWidget {
         children: [
           Text(value, style: GoogleFonts.tenorSans(fontSize: 32)),
           const SizedBox(height: 4),
-          Text(label, style: GoogleFonts.inter(fontSize: 10, letterSpacing: 1, color: Colors.black45)),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              letterSpacing: 1,
+              color: Colors.black45,
+            ),
+          ),
         ],
       ),
     );
@@ -148,26 +223,51 @@ class Profile extends StatelessWidget {
         color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(35),
         image: const DecorationImage(
-          image: NetworkImage('https://www.transparenttextures.com/patterns/black-linen.png'), // Subtle texture
+          image: NetworkImage(
+            'https://www.transparenttextures.com/patterns/black-linen.png',
+          ), // Subtle texture
           opacity: 0.1,
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("MEMBER SINCE", style: GoogleFonts.inter(color: Colors.white54, fontSize: 11, letterSpacing: 2)),
+          Text(
+            "MEMBER SINCE",
+            style: GoogleFonts.inter(
+              color: Colors.white54,
+              fontSize: 11,
+              letterSpacing: 2,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text("2024", style: GoogleFonts.tenorSans(color: Colors.white, fontSize: 44)),
+          Text(
+            "2024",
+            style: GoogleFonts.tenorSans(color: Colors.white, fontSize: 44),
+          ),
           const SizedBox(height: 8),
-          Text("Platinum Member", style: GoogleFonts.inter(color: Colors.white70, fontSize: 16)),
+          Text(
+            "Platinum Member",
+            style: GoogleFonts.inter(color: Colors.white70, fontSize: 16),
+          ),
           const SizedBox(height: 25),
           Row(
             children: [
-              Text("View Benefits", style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w500)),
+              Text(
+                "View Benefits",
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               const SizedBox(width: 8),
-              const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 12),
+              const Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.white,
+                size: 12,
+              ),
             ],
-          )
+          ),
         ],
       ),
     ).animate().fadeIn().slideY(begin: 0.1, end: 0);
@@ -189,15 +289,32 @@ class Profile extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
               if (subtitle.isNotEmpty)
-                Text(subtitle, style: GoogleFonts.inter(color: Colors.black38, fontSize: 11, fontWeight: FontWeight.w500)),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.inter(
+                    color: Colors.black38,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
             ],
           ),
           const Align(
             alignment: Alignment.bottomRight,
-            child: Icon(Icons.arrow_forward_ios, size: 12, color: Colors.black26),
-          )
+            child: Icon(
+              Icons.arrow_forward_ios,
+              size: 12,
+              color: Colors.black26,
+            ),
+          ),
         ],
       ),
     );
@@ -215,8 +332,20 @@ class Profile extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("RECENT ACTIVITY", style: GoogleFonts.inter(letterSpacing: 2, fontSize: 12, color: Colors.black45, fontWeight: FontWeight.w600)),
-              const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.black26),
+              Text(
+                "RECENT ACTIVITY",
+                style: GoogleFonts.inter(
+                  letterSpacing: 2,
+                  fontSize: 12,
+                  color: Colors.black45,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios,
+                size: 14,
+                color: Colors.black26,
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -237,42 +366,85 @@ class Profile extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
-            Text(desc, style: GoogleFonts.inter(color: Colors.black45, fontSize: 13)),
+            Text(
+              title,
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+            Text(
+              desc,
+              style: GoogleFonts.inter(color: Colors.black45, fontSize: 13),
+            ),
           ],
         ),
-        Text(date, style: GoogleFonts.inter(color: Colors.black38, fontSize: 12)),
+        Text(
+          date,
+          style: GoogleFonts.inter(color: Colors.black38, fontSize: 12),
+        ),
       ],
     );
   }
 
-//===================Acount Deletion Logic===================
+  //===================== Get userName from Firestore =====================
+Future<String> _getUserName() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    DocumentSnapshot doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+
+    if (doc.exists && doc.data() != null) {
+     
+      return doc.get('full_name') ?? "No Name"; 
+    }
+  }
+  return "Guest User";
+}
+
+  //===================Acount Deletion Logic===================
   Future<void> _deleteUserAccount(BuildContext context) async {
-  try {
-    // 1. Get the current user
-    final user = FirebaseAuth.instance.currentUser;
+    try {
+      final user = FirebaseAuth.instance.currentUser;
 
-    if (user != null) {
-      // 2. Delete the user from the Auth service
-      await user.delete();
+      if (user != null) {
+        String uid = user.uid;
 
-      // 3. Navigate away to the login screen
-      if (context.mounted) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const MobileLogin()),
-          (route) => false, // Clears the navigation stack
-        );
+        // 1. DELETE FROM BACKEND (Firestore Example)
+        // Do this FIRST while the user is still authenticated
+        await FirebaseFirestore.instance.collection('users').doc(uid).delete();
+
+        // 2. DELETE AUTHENTICATION
+        await user.delete();
+
+        // 3. NAVIGATE & CLEAN STACK
+        if (context.mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const MobileLogin()),
+            (route) => false,
+          );
+        }
       }
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        _showReauthDialog(context);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
     }
-  } on FirebaseAuthException catch (e) {
-    if (e.code == 'requires-recent-login') {
-      // Security measure: The user must have logged in recently to delete their account
-      print('The user must re-authenticate before this operation can be executed.');
-    }
-  } catch (e) {
-    print("Error deleting account: $e");
+  }
+
+  Future<void> _showReauthDialog(BuildContext context) async {
+    // Show a snackbar or dialog explaining they need to log in again
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Please log out and log back in to verify it's you."),
+      ),
+    );
   }
 }
-}
-

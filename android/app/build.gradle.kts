@@ -20,7 +20,8 @@ android {
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
-    signingConfigs {
+   signingConfigs {
+    if (keystorePropertiesFile.exists()) {
         create("release") {
             keyAlias = keystoreProperties["keyAlias"] as String
             keyPassword = keystoreProperties["keyPassword"] as String
@@ -28,7 +29,7 @@ android {
             storePassword = keystoreProperties["storePassword"] as String
         }
     }
-
+}
     defaultConfig {
         applicationId = "com.rd.gladskin"
         minSdk = flutter.minSdkVersion
@@ -37,13 +38,15 @@ android {
         versionName = flutter.versionName
     }
 
-    buildTypes {
-        release {
+   buildTypes {
+    release {
+        if (keystorePropertiesFile.exists()) {
             signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = false
-            isShrinkResources = false
         }
+        isMinifyEnabled = false
+        isShrinkResources = false
     }
+}
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
