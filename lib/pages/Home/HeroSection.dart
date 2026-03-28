@@ -8,98 +8,89 @@ class HeroSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Grey Block background for the image
-        Container(
-          height: double.infinity,
-          width: double.infinity,
-          margin: const EdgeInsets.only(bottom: 200),
-          color: const Color(0xFFF5F5F7),
-          child: Center(
-            child: Image.network(
-              'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000&auto=format&fit=crop',
-              height: 380,
-              fit: BoxFit.contain,
-            ).animate().fadeIn(duration: 1200.ms).moveY(begin: 20, end: 0),
-          ),
-        ),
-
-        // Text Content anchored to the bottom of this section
-        Positioned(
-          bottom: 20,
-          left: 25,
-          right: 25,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "NEW ARRIVAL",
-                style: GoogleFonts.inter(
-                  letterSpacing: 3,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black45,
-                ),
-              ),
-              const SizedBox(height: 15),
-              Text(
-                "Radiance\nRedefined",
-                style: GoogleFonts.tenorSans(
-                  fontSize: 58,
-                  height: 1.0,
-                  color: Colors.black,
-                ),
-              ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.1, end: 0),
-              const SizedBox(height: 25),
-              Text(
-                "Experience transformative luxury with our\nsignature serum, crafted for luminous skin.",
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  color: Colors.black54,
-                  height: 1.6,
-                ),
-              ),
-              const SizedBox(height: 40),
-              TextButton(
-                onPressed: () {
-                  context.go('/AllProducts');
-                },
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 45,
-                    vertical: 25,
-                  ),
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: Stack(
+          children: [
+            AspectRatio(
+              aspectRatio: 0.78,
+              child: Image.network(
+                'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80',
+                fit: BoxFit.cover,
+              )
+                  .animate()
+                  .fadeIn(duration: 1200.ms)
+                  .scale(begin: const Offset(1.02, 1.02), end: const Offset(1, 1)),
+            ),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.05),
+                      Colors.black.withOpacity(0.35),
+                    ],
                   ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      "DISCOVER",
+              ),
+            ),
+            Positioned(
+              left: 22,
+              right: 22,
+              bottom: 22,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "The\nMicrobiome\nRevolution",
+                    style: GoogleFonts.tenorSans(
+                      fontSize: 36,
+                      height: 1.05,
+                      color: Colors.white,
+                    ),
+                  ).animate().fadeIn(delay: 150.ms).moveY(begin: 10, end: 0),
+                  const SizedBox(height: 10),
+                  Text(
+                    "Science-backed solutions for eczema-prone skin.\nRestoring balance, one drop at a time.",
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      height: 1.5,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => context.go('/AllProducts'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF8C2F67),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: Text(
+                      "EXPLORE COLLECTION",
                       style: GoogleFonts.inter(
-                        color: Colors.white,
-                        letterSpacing: 2,
-                        fontSize: 13,
+                        fontSize: 12,
+                        letterSpacing: 1.4,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(width: 15),
-                    const Icon(
-                      Icons.arrow_forward_ios,
-                      size: 10,
-                      color: Colors.white,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
-    );;
+      ),
+    );
   }
 }
