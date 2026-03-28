@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:gladskin/models/product_detail.dart';
-import 'package:gladskin/models/product_model.dart';
-import 'package:gladskin/services/config.dart';
+import 'package:glowfit/models/product_detail.dart';
+import 'package:glowfit/models/product_model.dart';
+import 'package:glowfit/services/config.dart';
 import 'package:http/http.dart' as http;
 
 class APIService {

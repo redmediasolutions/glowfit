@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:gladskin/components/products_List.dart';
-import 'package:gladskin/models/product_model.dart';
-import 'package:gladskin/services/api.dart';
+import 'package:glowfit/components/products_List.dart';
+import 'package:glowfit/models/product_model.dart';
+import 'package:glowfit/services/api.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 

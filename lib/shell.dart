@@ -1,5 +1,5 @@
-import 'package:gladskin/components/Floating_Navbar.dart';
 import 'package:flutter/material.dart';
+import 'package:glowfit/components/Floating_Navbar.dart';
 
 class ShellPage extends StatelessWidget {
   final Widget child;

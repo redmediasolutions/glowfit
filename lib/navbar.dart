@@ -1,15 +1,16 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:gladskin/Auth/mobilelogin.dart';
-import 'package:gladskin/models/product_model.dart';
-import 'package:gladskin/pages/AllProducts/Products_view.dart';
-import 'package:gladskin/pages/AllProducts/all_products.dart';
-import 'package:gladskin/pages/Home/home.dart';
-import 'package:gladskin/pages/Search/searchPage.dart';
-import 'package:gladskin/pages/profile/profile.dart';
-import 'package:gladskin/pages/splashscreen.dart';
-import 'package:gladskin/shell.dart';
+import 'package:glowfit/Auth/mobilelogin.dart';
+import 'package:glowfit/models/product_model.dart';
+import 'package:glowfit/pages/AllProducts/Products_view.dart';
+import 'package:glowfit/pages/AllProducts/all_products.dart';
+import 'package:glowfit/pages/Home/home.dart';
+import 'package:glowfit/pages/Search/searchPage.dart';
+import 'package:glowfit/pages/profile/profile.dart';
+import 'package:glowfit/pages/splashscreen.dart';
+import 'package:glowfit/shell.dart';
+
 import 'package:go_router/go_router.dart';
 
 class AppRouter {

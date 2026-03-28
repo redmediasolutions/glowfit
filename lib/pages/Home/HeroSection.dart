@@ -100,6 +100,6 @@ class HeroSection extends StatelessWidget {
           ),
         ),
       ],
-    );;
+    );
   }
 }

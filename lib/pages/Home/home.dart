@@ -6,7 +6,6 @@ import 'package:glowfit/pages/Home/philosophysection.dart';
 import 'package:glowfit/pages/Home/shopcategory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:glowfit/components/primarheader.dart';
 

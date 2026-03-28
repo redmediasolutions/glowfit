@@ -26,6 +26,6 @@ class Collectionheader extends StatelessWidget {
           ),
         ],
       ),
-    );;
+    );
   }
 }

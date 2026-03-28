@@ -15,7 +15,13 @@ dependencies:
   visibility_detector: ^0.4.0+2
   shared_preferences: ^2.5.4
   firebase_core: ^4.5.0
+  firebase_auth: ^6.3.0
   flutter_svg: ^2.2.4
+  lottie: ^3.3.2
+  cloud_firestore: ^6.2.0
+  firebase_remote_config: ^6.3.0
+  carousel_slider: ^5.1.2
+  pinput: ^6.0.2
 
 dev_dependencies:
   flutter_test:

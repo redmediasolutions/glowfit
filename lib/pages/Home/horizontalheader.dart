@@ -122,8 +122,8 @@ class _LoadingList extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       scrollDirection: Axis.horizontal,
       itemCount: 4,
-      separatorBuilder: (_, __) => const SizedBox(width: 12),
-      itemBuilder: (_, __) {
+      separatorBuilder: (_, _) => const SizedBox(width: 12),
+      itemBuilder: (_, _) {
         return Container(
           width: 200,
           decoration: BoxDecoration(
