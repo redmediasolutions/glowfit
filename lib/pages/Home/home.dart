@@ -36,7 +36,7 @@ class _HomepageState extends State<Homepage> {
               const RecommendedSection(categoryId: "19"),
               const SizedBox(height: 36),
               const ValueBadges(),
-              const SizedBox(height: 60),
+              const SizedBox(height: 10),
             ],
           ),
         ),

@@ -7,6 +7,8 @@ import 'package:glowfit/pages/AllProducts/Products_view.dart';
 import 'package:glowfit/pages/AllProducts/all_products.dart';
 import 'package:glowfit/pages/Home/home.dart';
 import 'package:glowfit/pages/Search/searchPage.dart';
+import 'package:glowfit/pages/profile/editprofile.dart';
+import 'package:glowfit/pages/profile/loyalitypoints.dart';
 import 'package:glowfit/pages/profile/profile.dart';
 import 'package:glowfit/pages/splashscreen.dart';
 import 'package:glowfit/shell.dart';
@@ -63,13 +65,24 @@ class AppRouter {
         path: '/splash',
         builder: (context, state) => const SuccessSplashScreen(),
       ),
+      GoRoute(
+        path: '/points',
+        builder: (context, state) => const LoyaltyPointsPage(),
+      ),
 
       /// LOGIN PAGE
       GoRoute(
         path: '/login',
         builder: (context, state) => const MobileLogin(),
       ),
-
+         GoRoute(
+        path: '/editprofile',
+        builder: (context, state) => const Editprofile(),
+      ),
+      GoRoute(
+        path: '/address',
+        builder: (context, state) => const Editprofile(),
+      ),
       /// PRODUCT VIEW (outside bottom nav)
       GoRoute(
         path: '/productview',

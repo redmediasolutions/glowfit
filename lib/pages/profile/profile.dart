@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:glowfit/Auth/mobilelogin.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -52,57 +53,31 @@ class Profile extends StatelessWidget {
                   },
                 ),
                 const SizedBox(height: 20),
-                Text(
-                  "Manage your account, orders, and preferences",
-                  style: GoogleFonts.inter(
-                    color: Colors.black45,
-                    fontSize: 14,
-                    height: 1.5,
-                  ),
-                ),
+                _buildProfileHeader(),
                 const SizedBox(height: 35),
 
                 // --- Quick Stats Row ---
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [_buildStatItem("12", "ORDERS")],
-                ),
-                const SizedBox(height: 25),
 
                 // --- Membership Card ---
-                _buildMemberCard(),
+                // _buildSkinProfileCard(
+                //   skinType: "Combination / Sensitive",
+                //   concerns: ["Redness", "Hydration", "Fine Lines"],
+                // ),
                 const SizedBox(height: 25),
 
                 // --- Grid Menu ---
-                GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 15,
-                  mainAxisSpacing: 15,
-                  childAspectRatio: 1.1,
-                  children: [
-                    _buildGridTile(
-                      Icons.inventory_2_outlined,
-                      "Order History",
-                      "3 ACTIVE",
-                    ),
-                    _buildGridTile(Icons.favorite_border, "Saved Items", "24"),
-                    _buildGridTile(
-                      Icons.credit_card_outlined,
-                      "Payment Methods",
-                      "",
-                    ),
-                    _buildGridTile(Icons.settings_outlined, "Settings", ""),
-                  ],
-                ),
+                const SizedBox(height: 25),
+
+                // 3. Calling the Active Routine Card (The one that fetches from Cart)
+                _buildActiveRoutineCard(context),
                 const SizedBox(height: 30),
 
                 // --- Recent Activity Section ---
-                _buildActivitySection(),
+                _buildOrderHistorySection(context),
 
                 const SizedBox(height: 40),
-
+                _buildAccountSettings(context),
+                const SizedBox(height: 40),
                 // --- Sign Out Button ---
                 SizedBox(
                   width: double.infinity,
@@ -190,141 +165,263 @@ class Profile extends StatelessWidget {
     );
   }
 
-  Widget _buildStatItem(String value, String label) {
-    return Container(
-      width: 100,
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9F9F9),
-        borderRadius: BorderRadius.circular(25),
-      ),
-      child: Column(
-        children: [
-          Text(value, style: GoogleFonts.tenorSans(fontSize: 32)),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              letterSpacing: 1,
-              color: Colors.black45,
+  Widget _buildProfileHeader() {
+    final user = FirebaseAuth.instance.currentUser;
+
+    // Logic to get full date (e.g., October 2023)
+    final String fullDate = user?.metadata.creationTime != null
+        ? "${_getMonth(user!.metadata.creationTime!.month)} ${user.metadata.creationTime!.year}"
+        : "March 2026";
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // --- Profile Image with Glow ---
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF8A206E).withOpacity(0.2),
+                blurRadius: 50,
+                spreadRadius: 20,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(
+              60,
+            ), // Half of width/height for perfect circle
+            child: Container(
+              width: 120,
+              height: 120,
+              color: const Color(0xFF1A1A1A),
+              child: Image.network(
+                user?.photoURL ??
+                    'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+                fit: BoxFit.cover,
+                // Error handling for broken links
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.person, color: Colors.white, size: 50),
+              ),
             ),
           ),
-        ],
-      ),
+        ),
+
+
+
+        const SizedBox(height: 10),
+
+        // --- Reactive Name Loader ---
+        StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(user?.uid)
+              .snapshots(),
+          builder: (context, snapshot) {
+            // Use Auth name as initial value, then Firestore name once loaded
+            String displayName = "Guest User";
+
+            if (snapshot.hasData && snapshot.data!.exists) {
+              displayName =
+                  snapshot.data!.get('name') ??
+                  user?.displayName ??
+                  "Guest User";
+            } else {
+              displayName = user?.displayName ?? "Guest User";
+            }
+
+            return Text(
+              displayName,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.lora(
+                fontSize: 32, // Adjusted size for better fit
+                fontWeight: FontWeight.w500,
+                fontStyle: FontStyle.italic,
+                color: Colors.black,
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 8),
+
+        Text(
+          "Member since $fullDate • 450 Points",
+          style: GoogleFonts.inter(
+            color: Colors.black54,
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildMemberCard() {
+  // Helper function to convert month number to Name
+  String _getMonth(int month) {
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return months[month - 1];
+  }
+
+  
+
+  
+
+  Widget _buildActiveRoutineCard(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(30),
+      padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
+        color: const Color(
+          0xFFF2F0F0,
+        ), // The soft gray background from the image
         borderRadius: BorderRadius.circular(35),
-        image: const DecorationImage(
-          image: NetworkImage(
-            'https://www.transparenttextures.com/patterns/black-linen.png',
-          ), // Subtle texture
-          opacity: 0.1,
-        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "MEMBER SINCE",
-            style: GoogleFonts.inter(
-              color: Colors.white54,
-              fontSize: 11,
-              letterSpacing: 2,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "2024",
-            style: GoogleFonts.tenorSans(color: Colors.white, fontSize: 44),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Platinum Member",
-            style: GoogleFonts.inter(color: Colors.white70, fontSize: 16),
+          // --- Header Section ---
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Your Active\nRoutine",
+                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                  color: const Color(0xFF5E2A66),
+                ),
+              ),
+
+              StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('carts')
+                    .doc(FirebaseAuth.instance.currentUser?.uid)
+                    .collection('items')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  int count = snapshot.hasData ? snapshot.data!.docs.length : 0;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        "$count",
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(color: const Color(0xFF5E2A66)),
+                      ),
+                      Text(
+                        "PRODUCTS",
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          letterSpacing: 1,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
           ),
           const SizedBox(height: 25),
-          Row(
-            children: [
-              Text(
-                "View Benefits",
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(
-                Icons.arrow_forward_ios,
-                color: Colors.white,
-                size: 12,
-              ),
-            ],
-          ),
-        ],
-      ),
-    ).animate().fadeIn().slideY(begin: 0.1, end: 0);
-  }
 
-  Widget _buildGridTile(IconData icon, String title, String subtitle) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: const Color(0xFFF0F0F0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Icon(icon, size: 28),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+          // --- Products Grid ---
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('carts')
+                .doc(FirebaseAuth.instance.currentUser?.uid)
+                .collection('items')
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const Center(child: Text("No products in routine"));
+              }
+
+              final cartItems = snapshot.data!.docs;
+
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: cartItems.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 15,
+                  mainAxisSpacing: 20,
+                  childAspectRatio: 0.75,
                 ),
-              ),
-              if (subtitle.isNotEmpty)
-                Text(
-                  subtitle,
-                  style: GoogleFonts.inter(
-                    color: Colors.black38,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-            ],
-          ),
-          const Align(
-            alignment: Alignment.bottomRight,
-            child: Icon(
-              Icons.arrow_forward_ios,
-              size: 12,
-              color: Colors.black26,
-            ),
+                itemBuilder: (context, index) {
+                  final data = cartItems[index].data() as Map<String, dynamic>;
+                  return _buildRoutineTile(
+                    data['name'] ?? 'Product',
+                    data['image'] ?? '',
+
+                    // You can add a 'timeOfDay' field to your cart items in Firestore
+                  );
+                },
+              );
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActivitySection() {
+  Widget _buildRoutineTile(String name, String imageUrl) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              image: DecorationImage(
+                image: NetworkImage(imageUrl),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            color: const Color(0xFF1D212C),
+          ),
+        ),
+        // Text(
+        //   subtitle,
+        //   style: GoogleFonts.inter(
+        //     color: Colors.black38,
+        //     fontSize: 11,
+        //     fontWeight: FontWeight.w500,
+        //   ),
+        // ),
+      ],
+    );
+  }
+
+  Widget _buildOrderHistorySection(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9F9F9),
+        color: const Color(0xFFF9F9F9), // Matching your soft gray background
         borderRadius: BorderRadius.circular(35),
       ),
       child: Column(
@@ -333,76 +430,127 @@ class Profile extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "RECENT ACTIVITY",
-                style: GoogleFonts.inter(
-                  letterSpacing: 2,
-                  fontSize: 12,
-                  color: Colors.black45,
+                "Order History",
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w600,
+                  letterSpacing: -1.5,
+                  color: Colors.black,
                 ),
               ),
-              const Icon(
-                Icons.arrow_forward_ios,
-                size: 14,
-                color: Colors.black26,
+              TextButton(
+                onPressed: () {}, // Navigate to full history
+                child: Text(
+                  "VIEW ALL",
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1,
+                    color: const Color(0xFF8A206E), // Your brand purple
+                  ),
+                ),
               ),
             ],
           ),
+          const SizedBox(height: 10),
+
+          // List of orders
+          _buildOrderRow(
+            "OE-9821",
+            "Nov 12, 2023",
+            "142.00",
+            Icons.local_shipping_outlined,
+            context,
+          ),
           const SizedBox(height: 20),
-          _buildActivityRow("Order Delivered", "Radiance Serum", "Mar 1"),
-          const Divider(height: 30, color: Colors.black12),
-          _buildActivityRow("Review Posted", "Youth Cream", "Feb 28"),
-          const Divider(height: 30, color: Colors.black12),
-          _buildActivityRow("Item Saved", "Velvet Lipstick", "Feb 26"),
+          _buildOrderRow(
+            "OE-9455",
+            "Sep 28, 2023",
+            "89.00",
+            Icons.check_circle_outline,
+            context,
+          ),
+          const SizedBox(height: 20),
+          _buildOrderRow(
+            "OE-9102",
+            "Aug 05, 2023",
+            "215.50",
+            Icons.check_circle_outline,
+            context,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildActivityRow(String title, String desc, String date) {
+  Widget _buildOrderRow(
+    String orderId,
+    String date,
+    String price,
+    IconData icon,
+    BuildContext context,
+  ) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: GoogleFonts.inter(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              ),
-            ),
-            Text(
-              desc,
-              style: GoogleFonts.inter(color: Colors.black45, fontSize: 13),
-            ),
-          ],
+        // 1. Icon Container (The gray square)
+        Container(
+          width: 55,
+          height: 55,
+          decoration: BoxDecoration(
+            color: const Color(0xFFEBEBEB), // Soft gray from the image
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: const Color(0xFF6B6B6B), size: 24),
         ),
+        const SizedBox(width: 15),
+
+        // 2. Order Details
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Order #$orderId",
+                style: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(color: Colors.black),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                "Delivered • $date",
+                style: Theme.of(
+                  context,
+                ).textTheme.labelMedium?.copyWith(color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+
+        // 3. Price
         Text(
-          date,
-          style: GoogleFonts.inter(color: Colors.black38, fontSize: 12),
+          "\$₹price",
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontSize: 15, color: Colors.black),
         ),
       ],
     );
   }
 
   //===================== Get userName from Firestore =====================
-Future<String> _getUserName() async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user != null) {
-    DocumentSnapshot doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .get();
+  Future<String> _getUserName() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
 
-    if (doc.exists && doc.data() != null) {
-     
-      return doc.get('full_name') ?? "No Name"; 
+      if (doc.exists && doc.data() != null) {
+        return doc.get('full_name') ?? "No Name";
+      }
     }
+    return "Guest User";
   }
-  return "Guest User";
-}
 
   //===================Acount Deletion Logic===================
   Future<void> _deleteUserAccount(BuildContext context) async {
@@ -444,6 +592,90 @@ Future<String> _getUserName() async {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("Please log out and log back in to verify it's you."),
+      ),
+    );
+  }
+
+  Widget _buildAccountSettings(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 10, bottom: 20),
+          child: Text(
+            "Account Settings",
+            style: GoogleFonts.lora(
+              fontSize: 28,
+              fontStyle: FontStyle.italic,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF1D212C),
+            ),
+          ),
+        ),
+        _settingsTile(
+          icon: Icons.person_outline,
+          title: "Create Profile",
+          isActive: false,
+          onTap: () {
+           context.go('/editprofile');
+          },
+        ),
+        _settingsTile(
+          icon: Icons.location_on_outlined,
+          title: "Shipping Addresses",
+          isActive: true,
+          onTap: () {
+            context.go('/address');
+          },
+        ),
+        _settingsTile(
+          icon: Icons.notifications_none_outlined,
+          title: "Orders",
+          isActive: false,
+          onTap: () => (),
+        ),
+        _settingsTile(
+          icon: Icons.card_membership_outlined,
+          title: "Loyalty Points",
+          isActive: false,
+           onTap: () {
+            context.go('/points');
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _settingsTile({
+    required IconData icon,
+    required String title,
+    required bool isActive,
+    required VoidCallback onTap, // 1. Added this required parameter
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: isActive ? const Color(0xFFF5F5F5) : Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: ListTile(
+        onTap: onTap, // 2. Connected the function here
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        leading: Icon(icon, color: const Color(0xFF5E2A66), size: 26),
+        title: Text(
+          title,
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+            color: const Color(0xFF1D212C),
+          ),
+        ),
+        trailing: Icon(
+          Icons.arrow_forward_ios,
+          color: isActive ? const Color(0xFF5E2A66) : Colors.black12,
+          size: 16,
+        ),
       ),
     );
   }

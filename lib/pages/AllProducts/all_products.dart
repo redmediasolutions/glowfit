@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:glowfit/components/primarheader.dart';
 import 'package:glowfit/components/products_List.dart';
 import 'package:glowfit/components/secondaryscaffold.dart';
 import 'package:glowfit/models/product_model.dart';
@@ -51,7 +52,8 @@ class _AllProductsState extends State<AllProducts> {
 
   @override
   Widget build(BuildContext context) {
-    return Secondaryscaffold(
+    return PrimaryHeader(
+      
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -66,8 +68,8 @@ class _AllProductsState extends State<AllProducts> {
                   children: [
                     Text(
                           'All Products',
-                          style: GoogleFonts.inter(
-                            fontSize: 48,
+                          style:Theme.of(context).textTheme.bodySmall?.copyWith(
+                           fontSize: 40,
                             fontWeight: FontWeight.w600,
                             letterSpacing: -1.5,
                             color: Colors.black,

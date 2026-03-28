@@ -9,9 +9,11 @@ class CartItem {
     required this.price,
     required this.imageUrl,
     this.quantity = 1,
-  });
+  }) {
+    // Validation to ensure quantity never starts below 1
+    if (this.quantity < 1) this.quantity = 1;
+  }
 
-  // 1. Convert CartItem object into a Map (to save as JSON)
   Map<String, dynamic> toMap() {
     return {
       'name': name,
@@ -21,16 +23,16 @@ class CartItem {
     };
   }
 
-  // 2. Create a CartItem object from a Map (to load from JSON)
   factory CartItem.fromMap(Map<String, dynamic> map) {
     return CartItem(
-      name: map['name'] ?? '',
-      price: map['price'] ?? '',
-      imageUrl: map['imageUrl'] ?? '',
-      quantity: map['quantity'] ?? 1,
+      // Ensure we don't get 'null' as a string literal
+      name: map['name']?.toString() ?? 'Unknown Product',
+      price: map['price']?.toString() ?? '0.0',
+      imageUrl: map['imageUrl']?.toString() ?? '',
+      // Ensure quantity is at least 1 when loading from JSON
+      quantity: (map['quantity'] != null && map['quantity'] > 0) 
+                ? map['quantity'] 
+                : 1,
     );
   }
 }
-
-// Your global list remains the same
-List<CartItem> globalCart = [];

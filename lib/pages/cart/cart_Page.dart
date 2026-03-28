@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:visibility_detector/visibility_detector.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -14,8 +13,6 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
-  // Function to handle adding items
-
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -24,75 +21,46 @@ class _CartPageState extends State<CartPage> {
     super.dispose();
   }
 
-  Widget scrollTriggered(Widget Function(bool) builder, String key) {
-    ValueNotifier<bool> isVisible = ValueNotifier(false);
-
-    return VisibilityDetector(
-      key: Key(key),
-      onVisibilityChanged: (info) {
-        // Trigger when 15% of the widget is visible to ensure a smooth start
-        if (info.visibleFraction > 0.15 && !isVisible.value) {
-          isVisible.value = true;
-        }
-      },
-      child: ValueListenableBuilder<bool>(
-        valueListenable: isVisible,
-        builder: (context, visible, _) {
-          return builder(visible);
-        },
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final double screenHeight = MediaQuery.of(context).size.height;
-    final double appBarHeight = kToolbarHeight + 20;
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
+          onPressed: () => context.pop(),
+        ),
       ),
       body: SingleChildScrollView(
-        controller: _scrollController,
         physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(25, 40, 25, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                        'Cart',
-                        style: GoogleFonts.inter(
-                          fontSize: 48,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -1.5,
-                          color: Colors.black,
-                        ),
-                      )
-                      .animate()
-                      .fadeIn(duration: 600.ms)
-                      .slideX(begin: -0.1, end: 0),
-                  const SizedBox(height: 8),
-
-                  SizedBox(
-                    height: screenHeight - appBarHeight - 60,
-                    child: _buildCartOverlay(context),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 25),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              Text(
+                'Cart',
+                style: GoogleFonts.inter(
+                  fontSize: 48,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -1.5,
+                  color: Colors.black,
+                ),
+              ).animate().fadeIn(duration: 600.ms).slideX(begin: -0.1, end: 0),
+              const SizedBox(height: 30),
+              _buildCartOverlay(context),
+              const SizedBox(height: 100),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  //=======================CART DISPLAY ITEMS & SUMMARY===============================
   Widget _buildCartOverlay(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
@@ -105,10 +73,10 @@ class _CartPageState extends State<CartPage> {
           .collection('carts')
           .doc(user.uid)
           .collection('items')
-          .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
-        if (snapshot.hasError) return const Text("Something went wrong");
+        if (snapshot.hasError)
+          return Center(child: Text("Error: ${snapshot.error}"));
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
             child: CircularProgressIndicator(color: Colors.black),
@@ -117,89 +85,100 @@ class _CartPageState extends State<CartPage> {
 
         final docs = snapshot.data?.docs ?? [];
 
-        // 1. Handle Empty State First
         if (docs.isEmpty) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 40),
-              child: Text(
-                "Your cart is empty",
-                style: TextStyle(color: Colors.grey),
-              ),
+          return Center(
+            child: Column(
+              children: [
+                const SizedBox(height: 100),
+                Icon(
+                  Icons.shopping_bag_outlined,
+                  size: 80,
+                  color: Colors.grey[200],
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  "Your cart is empty",
+                  style: GoogleFonts.inter(color: Colors.grey, fontSize: 16),
+                ),
+              ],
             ),
           );
         }
 
-        // 2. Calculate Totals (Initialize variables once)
+        // --- CALCULATION LOGIC ---
         double subtotal = 0;
-        int totalQuantity = 0;
-
         for (var doc in docs) {
           final data = doc.data() as Map<String, dynamic>;
-          double price = (data['salePrice'] ?? 0).toDouble();
-          int qty = (data['quantity'] ?? 1).toInt();
-
+          // Ensure we handle both int and double from Firestore
+          double price =
+              double.tryParse(data['salePrice']?.toString() ?? '0') ?? 0.0;
+          int qty = (data['quantity'] ?? 0).toInt();
           subtotal += price * qty;
-          totalQuantity += qty; // Now tracking total items correctly
         }
-        double shipping = subtotal >= 500 ? 29.0 : 49.0;
-double taxRate = (subtotal + shipping) * 0.05;
 
-        double total = subtotal + shipping + taxRate;
+        double shipping = (subtotal == 0)
+            ? 0.0
+            : (subtotal >= 500 ? 29.0 : 49.0);
+
+        double tax = subtotal * 0.05;
+        double total = subtotal + shipping + tax;
 
         return Column(
           children: [
-            // Optional: Add a small badge showing the totalQuantity here if you like
+            ListView.builder(
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: docs.length,
+              itemBuilder: (context, index) {
+                final data = docs[index].data() as Map<String, dynamic>;
+                final String docId = docs[index].id;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 15),
+                  child: _buildCartItem(
+                    name: data['name']?.toString() ?? 'Unnamed Product',
+                    price: "₹${data['salePrice']?.toString() ?? '0'}",
+                    imageUrl: data['image']?.toString() ?? '',
+                    quantity: (data['quantity'] ?? 1).toInt(),
+                    onIncrement: () => _updateQty(docId, 1),
+                    onDecrement: () => _updateQty(docId, -1),
+                    onRemove: () => _removeItem(docId),
+                  ),
+                );
+              },
+            ),
+
+            const SizedBox(height: 30),
+
             Container(
-              width: double.infinity,
               padding: const EdgeInsets.all(25),
-              decoration: const BoxDecoration(
-                color: Color(0xFFF9F9F9),
-                borderRadius: BorderRadius.all(Radius.circular(30)),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9F9F9),
+                borderRadius: BorderRadius.circular(30),
               ),
               child: Column(
                 children: [
-                  // List of Items
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: docs.length,
-                    itemBuilder: (context, index) {
-                      final data = docs[index].data() as Map<String, dynamic>;
-                      final String docId = docs[index].id;
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 20),
-                        child: _buildCartItem(
-                          name: data['name'] ?? 'Unknown',
-                          price: "₹${data['salePrice']}",
-                          imageUrl: data['image'] ?? '',
-                          quantity: (data['quantity'] ?? 1).toInt(),
-                          onIncrement: () => _updateQty(docId, 1),
-                          onDecrement: () => _updateQty(docId, -1),
-                          onRemove: () => _removeItem(docId),
-                        ),
-                      );
-                    },
+                  _buildSummaryRow(
+                    "Subtotal",
+                    "₹${subtotal.toStringAsFixed(0)}",
                   ),
-
-                  const Divider(thickness: 0.5),
-                  const SizedBox(height: 20),
-                  _buildSummaryRow("Subtotal", "₹ ${subtotal.toInt()}"),
                   const SizedBox(height: 12),
-                  _buildSummaryRow("Tax (5%)", "₹ ${taxRate.toInt()}"),
+                  _buildSummaryRow("Tax (5%)", "₹${tax.toStringAsFixed(0)}"),
                   const SizedBox(height: 12),
-                  _buildSummaryRow("Shipping", "₹ ${shipping.toInt()}"),
-                  const SizedBox(height: 25),
+                  _buildSummaryRow(
+                    "Shipping",
+                    "₹${shipping.toStringAsFixed(0)}",
+                  ),
+                  const Divider(height: 40, thickness: 1),
                   _buildSummaryRow(
                     "Total",
-                    "₹ ${total.toInt()}",
+                    "₹${total.toStringAsFixed(0)}",
                     isTotal: true,
                   ),
                 ],
               ),
             ),
-            // Checkout Button
             _buildCheckoutButton(),
           ],
         );
@@ -207,36 +186,6 @@ double taxRate = (subtotal + shipping) * 0.05;
     );
   }
 
-  //================PROCEED TO CHECKOUT===============================
-  Widget _buildCheckoutButton() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 20, bottom: 40),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.black,
-          minimumSize: const Size(double.infinity, 75),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          elevation: 0,
-        ),
-        onPressed: () {
-          context.go('/splash');
-        },
-        child: Text(
-          "PROCEED TO CHECKOUT",
-          style: GoogleFonts.inter(
-            color: Colors.white,
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.5,
-          ),
-        ),
-      ),
-    );
-  }
-
-  //================CART ITEM WIDGET===============================
   Widget _buildCartItem({
     required String name,
     required String price,
@@ -263,12 +212,20 @@ double taxRate = (subtotal + shipping) * 0.05;
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(15),
-            child: Image.network(
-              imageUrl,
-              width: 80,
-              height: 80,
-              fit: BoxFit.cover,
-            ),
+            child: imageUrl.isNotEmpty
+                ? Image.network(
+                    imageUrl,
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                    errorBuilder: (c, e, s) => Container(
+                      width: 80,
+                      height: 80,
+                      color: Colors.grey[100],
+                      child: const Icon(Icons.image_not_supported),
+                    ),
+                  )
+                : Container(width: 80, height: 80, color: Colors.grey[100]),
           ),
           const SizedBox(width: 20),
           Expanded(
@@ -281,43 +238,40 @@ double taxRate = (subtotal + shipping) * 0.05;
                     Expanded(
                       child: Text(
                         name,
-                        style: const TextStyle(
+                        style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                         ),
-                        softWrap: true,
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-
-                    GestureDetector(
-                      onTap: onRemove,
-                      child: const Icon(
+                    IconButton(
+                      icon: const Icon(
                         Icons.close,
                         size: 18,
                         color: Colors.grey,
                       ),
+                      onPressed: onRemove,
                     ),
                   ],
                 ),
-                const SizedBox(height: 5),
                 Text(
                   price,
-                  style: const TextStyle(fontSize: 16, color: Colors.black54),
+                  style: GoogleFonts.inter(fontSize: 14, color: Colors.black54),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     _quantityBtn(
                       quantity <= 1 ? Icons.delete_outline : Icons.remove,
-                      quantity <= 1 ? onRemove : onDecrement,
+                      onDecrement, // Transaction will handle removal if it hits 0
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15),
                       child: Text(
                         "$quantity",
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w600),
                       ),
                     ),
                     _quantityBtn(Icons.add, onIncrement),
@@ -336,64 +290,101 @@ double taxRate = (subtotal + shipping) * 0.05;
       onTap: onTap,
       borderRadius: BorderRadius.circular(50),
       child: Container(
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           color: Colors.grey[100],
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, size: 16, color: Colors.black),
+        child: Icon(icon, size: 14, color: Colors.black),
       ),
     );
   }
 
-  //================SUMMARY ROW WIDGET(SUBTOTAL)===============================
   Widget _buildSummaryRow(String label, String value, {bool isTotal = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: isTotal ? 22 : 16,
+          style: GoogleFonts.inter(
+            fontSize: isTotal ? 20 : 15,
             fontWeight: isTotal ? FontWeight.w700 : FontWeight.w400,
-            color: isTotal ? Colors.black : Colors.black45,
           ),
         ),
         Text(
           value,
-          style: TextStyle(
-            fontSize: isTotal ? 22 : 16,
-            fontWeight: isTotal ? FontWeight.w700 : FontWeight.w500,
+          style: GoogleFonts.inter(
+            fontSize: isTotal ? 20 : 15,
+            fontWeight: isTotal ? FontWeight.w700 : FontWeight.w600,
           ),
         ),
       ],
     );
   }
 
-  //================UPDATE CART===============================
+  Widget _buildCheckoutButton() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 25),
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.black,
+          minimumSize: const Size(double.infinity, 65),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+        ),
+        onPressed: () => context.go('/splash'),
+        child: Text(
+          "PROCEED TO CHECKOUT",
+          style: GoogleFonts.inter(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- DATABASE OPERATIONS ---
 
   void _updateQty(String docId, int delta) async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     final docRef = FirebaseFirestore.instance
         .collection('carts')
-        .doc(uid)
+        .doc(user.uid)
         .collection('items')
         .doc(docId);
 
-    final doc = await docRef.get();
-    int currentQty = doc.data()?['quantity'] ?? 1;
+    try {
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        DocumentSnapshot snapshot = await transaction.get(docRef);
+        if (!snapshot.exists) return;
 
-    if (currentQty + delta > 0) {
-      await docRef.update({'quantity': currentQty + delta});
+        int currentQty =
+            (snapshot.data() as Map<String, dynamic>)['quantity'] ?? 1;
+        int newQty = currentQty + delta;
+
+        if (newQty <= 0) {
+          transaction.delete(docRef);
+        } else {
+          transaction.update(docRef, {'quantity': newQty});
+        }
+      });
+    } catch (e) {
+      debugPrint("Update error: $e");
     }
   }
 
-  //================REMOVE ITEM FROM CART===============================
   void _removeItem(String docId) async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     await FirebaseFirestore.instance
         .collection('carts')
-        .doc(uid)
+        .doc(user.uid)
         .collection('items')
         .doc(docId)
         .delete();
