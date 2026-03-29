@@ -31,42 +31,17 @@ class Profile extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 10),
-                FutureBuilder<String>(
-                  future: _getUserName(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Text("Loading...");
-                    } else if (snapshot.hasError) {
-                      return const Text("Error loading name");
-                    } else {
-                      return Text(
-                        snapshot.data!.toUpperCase(),
-                        style: GoogleFonts.inter(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[700],
-                          letterSpacing: 1.5,
-                        ),
-                      );
-                    }
-                  },
-                ),
+              
                 const SizedBox(height: 20),
-                _buildProfileHeader(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildProfileHeader(),
+                  ],
+                ),
                 const SizedBox(height: 35),
 
-                // --- Quick Stats Row ---
-
-                // --- Membership Card ---
-                // _buildSkinProfileCard(
-                //   skinType: "Combination / Sensitive",
-                //   concerns: ["Redness", "Hydration", "Fine Lines"],
-                // ),
-                const SizedBox(height: 25),
-
-                // --- Grid Menu ---
-                const SizedBox(height: 25),
+              
 
                 // 3. Calling the Active Routine Card (The one that fetches from Cart)
                 _buildActiveRoutineCard(context),
@@ -303,6 +278,8 @@ class Profile extends StatelessWidget {
                 "Your Active\nRoutine",
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                   color: const Color(0xFF5E2A66),
+                  fontSize: 28,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
 
@@ -431,21 +408,22 @@ class Profile extends StatelessWidget {
             children: [
               Text(
                 "Order History",
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -1.5,
-                  color: Colors.black,
-                ),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontSize: 28,
+              fontStyle: FontStyle.italic,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF1D212C),
+            )
               ),
               TextButton(
                 onPressed: () {}, // Navigate to full history
                 child: Text(
                   "VIEW ALL",
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
+                  style:Theme.of(context).textTheme.labelLarge?.copyWith(
+                   fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1,
-                    color: const Color(0xFF8A206E), // Your brand purple
+                    color: const Color(0xFF8A206E),
                   ),
                 ),
               ),
@@ -482,6 +460,7 @@ class Profile extends StatelessWidget {
     );
   }
 
+//==========================Order History Row==========================
   Widget _buildOrderRow(
     String orderId,
     String date,
@@ -527,7 +506,7 @@ class Profile extends StatelessWidget {
 
         // 3. Price
         Text(
-          "\$₹price",
+          "\₹$price",
           style: Theme.of(
             context,
           ).textTheme.titleLarge?.copyWith(fontSize: 15, color: Colors.black),
@@ -536,22 +515,8 @@ class Profile extends StatelessWidget {
     );
   }
 
-  //===================== Get userName from Firestore =====================
-  Future<String> _getUserName() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      DocumentSnapshot doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
 
-      if (doc.exists && doc.data() != null) {
-        return doc.get('full_name') ?? "No Name";
-      }
-    }
-    return "Guest User";
-  }
-
+ 
   //===================Acount Deletion Logic===================
   Future<void> _deleteUserAccount(BuildContext context) async {
     try {
@@ -595,7 +560,7 @@ class Profile extends StatelessWidget {
       ),
     );
   }
-
+//==========================Account Settings Section==========================
   Widget _buildAccountSettings(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -604,12 +569,12 @@ class Profile extends StatelessWidget {
           padding: const EdgeInsets.only(left: 10, bottom: 20),
           child: Text(
             "Account Settings",
-            style: GoogleFonts.lora(
-              fontSize: 28,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontSize: 28,
               fontStyle: FontStyle.italic,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF1D212C),
-            ),
+            )
           ),
         ),
         _settingsTile(
