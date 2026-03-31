@@ -17,47 +17,93 @@ class _MobileLoginState extends State<MobileLogin> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _otpController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
   String _verificationId = "";
   bool _isOtpSent = false;
   bool _isLoading = false;
-  final Color primaryColor = const Color(0xFF6366F1); // Modern Indigo
-  final Color secondaryColor = const Color(0xFFF1F5F9); // Light Slate
 
+  final Color primaryColor = const Color(0xFF6366F1);
+  final Color secondaryColor = const Color(0xFFF1F5F9);
 
-//================================ save user to firestore after successful login ================================
-Future<void> _saveUserToFirestore(User user) async {
-  final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+  // ================= SAVE USER =================
+  Future<void> _saveUserToFirestore(User user) async {
+    final userDoc =
+        FirebaseFirestore.instance.collection('users').doc(user.uid);
 
-  await userDoc.set({
-    'uid': user.uid,
-    'phoneNumber': user.phoneNumber,
-    'lastLogin': FieldValue.serverTimestamp(),
-    // We set these as empty if it's a new user, 
-    // so the Profile page can fetch them later
-    'full_name': user.displayName ?? "", 
-    'createdAt': FieldValue.serverTimestamp(),
-  }, SetOptions(merge: true));
-}
-//===============================OTP SENDING LOGIC===============================
+    await userDoc.set({
+      'uid': user.uid,
+      'phoneNumber': user.phoneNumber,
+      'isGuest': user.isAnonymous, // ✅ important
+      'lastLogin': FieldValue.serverTimestamp(),
+      'full_name': user.displayName ?? "",
+      'createdAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  // ================= GUEST LOGIN =================
+  Future<void> _handleGuestLogin() async {
+    setState(() => _isLoading = true);
+
+    try {
+      User? user = _auth.currentUser;
+
+      // If no user → create guest
+      if (user == null) {
+        final result = await _auth.signInAnonymously();
+        user = result.user;
+      }
+
+      if (user != null) {
+        await _saveUserToFirestore(user);
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Continuing as Guest")),
+        );
+
+        context.go('/home', extra: int.parse(categoryId));
+      }
+    } catch (e) {
+      debugPrint("Guest Login Error: $e");
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Guest Login Failed")),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // ================= SEND OTP =================
   Future<void> _sendOtp() async {
     setState(() => _isLoading = true);
     final String fullPhoneNumber = "+91${_phoneController.text.trim()}";
+
     try {
       await _auth.verifyPhoneNumber(
-        phoneNumber:fullPhoneNumber,
-      verificationCompleted: (PhoneAuthCredential credential) async {
-  UserCredential userCredential = await _auth.signInWithCredential(credential);
-  if (userCredential.user != null) {
-    await _saveUserToFirestore(userCredential.user!);
-  }
-  _navigateToHome();
-},
+        phoneNumber: fullPhoneNumber,
+
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          UserCredential userCredential =
+              await _auth.signInWithCredential(credential);
+
+          if (userCredential.user != null) {
+            await _saveUserToFirestore(userCredential.user!);
+          }
+
+          _navigateToHome();
+        },
+
         verificationFailed: (FirebaseAuthException e) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Verification Failed: ${e.message}")),
           );
           setState(() => _isLoading = false);
         },
+
         codeSent: (String verificationId, int? resendToken) {
           setState(() {
             _verificationId = verificationId;
@@ -65,6 +111,7 @@ Future<void> _saveUserToFirestore(User user) async {
             _isLoading = false;
           });
         },
+
         codeAutoRetrievalTimeout: (String verificationId) {
           _verificationId = verificationId;
         },
@@ -74,47 +121,43 @@ Future<void> _saveUserToFirestore(User user) async {
       setState(() => _isLoading = false);
     }
   }
-  
-//===============================OPT VERIFICATION LOGIC===============================
-Future<void> _verifyOtp() async {
-  setState(() => _isLoading = true);
-  try {
-    PhoneAuthCredential credential = PhoneAuthProvider.credential(
-      verificationId: _verificationId,
-      smsCode: _otpController.text.trim(),
-    );
 
-    UserCredential userCredential = await _auth.signInWithCredential(credential);
+  // ================= VERIFY OTP =================
+  Future<void> _verifyOtp() async {
+    setState(() => _isLoading = true);
 
-    // 1. SAVE TO FIRESTORE
-    if (userCredential.user != null) {
-      await _saveUserToFirestore(userCredential.user!);
-    }
-
-    // 2. THE FIX: Check if the widget is still mounted before using context
-    if (!mounted) return; 
-
-    _navigateToHome();
-    
-  } catch (e) {
-    // 3. THE FIX: Check here too before showing a SnackBar
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Invalid OTP. Try again.")),
+    try {
+      PhoneAuthCredential credential = PhoneAuthProvider.credential(
+        verificationId: _verificationId,
+        smsCode: _otpController.text.trim(),
       );
-    }
-  } finally {
-    // 4. THE FIX: Check before calling setState
-    if (mounted) {
-      setState(() => _isLoading = false);
+
+      UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
+
+      if (userCredential.user != null) {
+        await _saveUserToFirestore(userCredential.user!);
+      }
+
+      if (!mounted) return;
+
+      _navigateToHome();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Invalid OTP. Try again.")),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
-}
+
   void _navigateToHome() {
     context.go('/home', extra: int.parse(categoryId));
   }
 
-//============================ UI BUILD METHOD WITH MODERN DESIGN ==============================
+  // ================= UI =================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -126,7 +169,8 @@ Future<void> _verifyOtp() async {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 60),
-              // Header Image/Icon
+
+              // Icon
               Center(
                 child: Container(
                   padding: const EdgeInsets.all(20),
@@ -141,87 +185,57 @@ Future<void> _verifyOtp() async {
                   ),
                 ),
               ),
+
               const SizedBox(height: 40),
-              // Dynamic Text Section
+
               Text(
                 _isOtpSent ? "Verification" : "Welcome Back",
                 style: const TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
-                  letterSpacing: -1,
                 ),
               ),
+
               const SizedBox(height: 10),
+
               Text(
                 _isOtpSent
                     ? "We've sent a 6-digit code to ${_phoneController.text}"
                     : "Sign in to continue your shopping journey.",
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                style: TextStyle(color: Colors.grey[600]),
               ),
+
               const SizedBox(height: 50),
 
               if (!_isOtpSent) ...[
-                // Phone Input
                 TextField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                  ),
                   decoration: InputDecoration(
-                    // Adds the +91 prefix permanently to the start of the field
                     prefixIcon: const Icon(Icons.phone_android),
                     prefixText: "+91 ",
-                    prefixStyle: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    hintText: "Enter Mobile Number",
                     filled: true,
                     fillColor: secondaryColor,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide.none,
                     ),
+                    hintText: "Enter Mobile Number",
                   ),
                 ),
               ] else ...[
-                // Custom Pinput Design
                 Center(
                   child: Pinput(
                     length: 6,
                     controller: _otpController,
                     onCompleted: (pin) => _verifyOtp(),
-                    defaultPinTheme: PinTheme(
-                      width: 50,
-                      height: 56,
-                      textStyle: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      decoration: BoxDecoration(
-                        color: secondaryColor,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    focusedPinTheme: PinTheme(
-                      width: 50,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: primaryColor, width: 2),
-                      ),
-                    ),
                   ),
                 ),
               ],
 
               const SizedBox(height: 40),
 
-              // Main Button
+              // OTP Button
               _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : SizedBox(
@@ -231,21 +245,37 @@ Future<void> _verifyOtp() async {
                         onPressed: _isOtpSent ? _verifyOtp : _sendOtp,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryColor,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
                         child: Text(
                           _isOtpSent ? "Verify Now" : "Get Verification Code",
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
                         ),
                       ),
                     ),
+
+              // ✅ GUEST BUTTON ADDED HERE
+              if (!_isOtpSent) ...[
+                const SizedBox(height: 16),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 58,
+                  child: OutlinedButton(
+                    onPressed: _isLoading ? null : _handleGuestLogin,
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      "Continue as Guest",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
 
               if (_isOtpSent) ...[
                 const SizedBox(height: 15),
@@ -254,10 +284,7 @@ Future<void> _verifyOtp() async {
                     onPressed: () => setState(() => _isOtpSent = false),
                     child: Text(
                       "Edit Phone Number",
-                      style: TextStyle(
-                        color: primaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: TextStyle(color: primaryColor),
                     ),
                   ),
                 ),

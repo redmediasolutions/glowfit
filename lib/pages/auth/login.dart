@@ -316,7 +316,7 @@ class _MobileLoginWidgetState extends State<MobileLoginWidget> {
                   width: double.infinity,
                   height: 56,
                   child: OutlinedButton(
-                    onPressed: _isLoading ? null : _handleGuestLogin,
+                    onPressed: _handleGuestLogin,
                     onLongPress: () {
                       // Navigator.push(
                       //   context,
