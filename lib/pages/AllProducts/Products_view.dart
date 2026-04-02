@@ -60,13 +60,48 @@ class _ProductsViewState extends State<ProductsView> {
     super.dispose();
   }
 
-  void _updateQty(Productsmodel p, int change) async {
+  bool _isGuest() {
+    final user = FirebaseAuth.instance.currentUser;
+    return user == null || user.isAnonymous;
+  }
+
+  void _showLoginSnackBar() {
+    final theme = Theme.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        backgroundColor: const Color(0xFF1D212C),
+        elevation: 6,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        content: Row(
+          children: [
+            const Icon(Icons.lock_outline, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Please login to add to cart',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<bool> _updateQty(Productsmodel p, int change) async {
     final user = FirebaseAuth.instance.currentUser;
 
     // If user is not logged in, you should show your login sheet here
-    if (user == null) {
-      print("⛔ User not logged in");
-      return;
+    if (user == null || user.isAnonymous) {
+      return false;
     }
 
     final String productId = p.id.toString();
@@ -89,14 +124,18 @@ class _ProductsViewState extends State<ProductsView> {
       }, SetOptions(merge: true));
 
       print("✅ Cart Updated: $productId");
+      return true;
     } catch (e) {
       print("❌ Firestore Error: $e");
+      return false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final p = widget.product;
+    final user = FirebaseAuth.instance.currentUser;
+    final bool isGuest = user == null || user.isAnonymous;
 
     return Scaffold(
       appBar: AppBar(
@@ -127,79 +166,142 @@ class _ProductsViewState extends State<ProductsView> {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Row(
           children: [
-            StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('carts')
-                  .doc(FirebaseAuth.instance.currentUser?.uid)
-                  .collection('items')
-                  .doc(p.id.toString()) // Use p.id.toString() here
-                  .snapshots(),
-              builder: (context, snapshot) {
-                int currentQty = 0;
-                if (snapshot.hasData && snapshot.data!.exists) {
-                  var data = snapshot.data!.data() as Map<String, dynamic>;
-                  currentQty = data['quantity'] ?? 0;
-                }
+            if (isGuest)
+              Container(
+                height: 50,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(25),
+                  border: Border.all(color: Colors.grey.shade200),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.remove,
+                      size: 18,
+                      color: Colors.grey.shade300,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      "0",
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                    ),
+                    const SizedBox(width: 10),
+                    Icon(
+                      Icons.add,
+                      size: 18,
+                      color: Colors.grey.shade300,
+                    ),
+                  ],
+                ),
+              )
+            else
+              StreamBuilder<DocumentSnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('carts')
+                    .doc(user.uid)
+                    .collection('items')
+                    .doc(p.id.toString()) // Use p.id.toString() here
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  int currentQty = 0;
+                  if (snapshot.hasData && snapshot.data!.exists) {
+                    var data = snapshot.data!.data() as Map<String, dynamic>;
+                    currentQty = data['quantity'] ?? 0;
+                  }
 
-                return Container(
-                  height: 50,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(25),
-                    border: Border.all(color: Colors.grey.shade200),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      IconButton(
+                  return Container(
+                    height: 50,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(25),
+                      border: Border.all(color: Colors.grey.shade200),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        IconButton(
                         onPressed: currentQty > 0
-                            ? () =>
-                                  _updateQty(p, -1) // Pass the whole object 'p'
+                            ? () async {
+                                if (_isGuest()) {
+                                  context.go('/login');
+                                  return;
+                                }
+                                await _updateQty(
+                                  p,
+                                  -1,
+                                ); // Pass the whole object 'p'
+                              }
                             : null,
-                        icon: Icon(
-                          Icons.remove,
-                          size: 18,
-                          color: currentQty > 0
-                              ? Colors.grey
-                              : Colors.grey.shade300,
+                          icon: Icon(
+                            Icons.remove,
+                            size: 18,
+                            color: currentQty > 0
+                                ? Colors.grey
+                                : Colors.grey.shade300,
+                          ),
                         ),
-                      ),
-                      Text(
-                        "$currentQty",
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                      ),
-                      IconButton(
-                        onPressed: () =>
-                            _updateQty(p, 1), // Pass the whole object 'p'
-                        icon: const Icon(
-                          Icons.add,
-                          size: 18,
-                          color: Colors.grey,
+                        Text(
+                          "$currentQty",
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                        IconButton(
+                        onPressed: () async {
+                          if (_isGuest()) {
+                            context.go('/login');
+                            return;
+                          }
+                          await _updateQty(p, 1); // Pass the whole object 'p'
+                        },
+                          icon: const Icon(
+                            Icons.add,
+                            size: 18,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
 
             const SizedBox(width: 12),
 
             Expanded(
               child: GestureDetector(
-                onTap: () {
-                  _updateQty(p, 1); // Pass the whole object 'p'
+                onTap: () async {
+                  if (_isGuest()) {
+                    _showLoginSnackBar();
+                    context.go('/login');
+                    return;
+                  }
+                  final bool added = await _updateQty(
+                    p,
+                    1,
+                  ); // Pass the whole object 'p'
+                  if (!added) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Added to cart'),

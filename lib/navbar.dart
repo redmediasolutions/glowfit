@@ -26,8 +26,8 @@ class AppRouter {
   static final GoRouter router = GoRouter(
     navigatorKey: rootNavigatorKey,
 
-    /// Start from splash to wait for auth state restoration
-    initialLocation: '/splash',
+    /// Start from home (no splash on app launch)
+    initialLocation: '/home',
 
     /// Refresh router when auth changes
     refreshListenable: authStateNotifier,
@@ -36,22 +36,34 @@ class AppRouter {
     redirect: (context, state) {
       final bool isInitialized = authStateNotifier.isInitialized;
       final user = authStateNotifier.user;
+      final bool isGuest = user == null || user.isAnonymous;
 
       final isLoginPage = state.matchedLocation == '/login';
-      final isSplashPage = state.matchedLocation == '/splash';
 
-      /// Wait for FirebaseAuth to restore the session
+      // Public routes that should be accessible without login
+      const publicPaths = <String>{
+        '/login',
+        '/home',
+        '/AllProducts',
+        '/search',
+        '/productview',
+      };
+
+      final String currentPath = state.matchedLocation;
+      final bool isPublicRoute = publicPaths.contains(currentPath);
+
+      /// Wait for FirebaseAuth to restore the session (no forced splash)
       if (!isInitialized) {
-        return isSplashPage ? null : '/splash';
+        return null;
       }
 
-      /// If NOT logged in → go to login
-      if (user == null) {
-        return isLoginPage ? null : '/login';
+      /// If NOT logged in (or guest), allow public routes only
+      if (isGuest) {
+        return isPublicRoute ? null : '/login';
       }
 
-      /// If logged in and trying to open login or splash → go home
-      if ((isLoginPage || isSplashPage)) {
+      /// If fully logged in and trying to open login ? go home
+      if (isLoginPage) {
         return '/home';
       }
 
@@ -168,3 +180,5 @@ class AuthStateNotifier extends ChangeNotifier {
     super.dispose();
   }
 }
+
+

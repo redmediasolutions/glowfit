@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; 
+import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FloatingNavBar extends StatelessWidget {
   const FloatingNavBar({super.key});
@@ -48,13 +49,29 @@ class FloatingNavBar extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(BuildContext context, IconData icon, int index, String route, int selectedIndex) {
+  Widget _buildNavItem(
+    BuildContext context,
+    IconData icon,
+    int index,
+    String route,
+    int selectedIndex,
+  ) {
     bool isSelected = selectedIndex == index;
     Color activeColor = Colors.black; 
     Color inactiveColor = Colors.blueGrey.withOpacity(0.3);
 
     return GestureDetector(
-      onTap: () => context.go(route), // Navigation happens here
+      onTap: () {
+        if (route == '/profile') {
+          final user = FirebaseAuth.instance.currentUser;
+          final bool isGuest = user == null || user.isAnonymous;
+          if (isGuest) {
+            context.go('/login?source=profile');
+            return;
+          }
+        }
+        context.go(route);
+      }, // Navigation happens here
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
