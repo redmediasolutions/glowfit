@@ -1,10 +1,8 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:glowfit/Auth/mobilelogin.dart';
 import 'package:glowfit/models/product_model.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -77,8 +75,7 @@ class _ProductsViewState extends State<ProductsView> {
         .doc(productId);
 
     try {
-      // We use .set with merge: true so that if the item doesn't exist, it is created.
-      // If it DOES exist, only the quantity and updatedAt change.
+     
       await docRef.set({
         'productId': p.id,
         'name': p.name,
@@ -88,9 +85,9 @@ class _ProductsViewState extends State<ProductsView> {
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      print("✅ Cart Updated: $productId");
+      print(" Cart Updated: $productId");
     } catch (e) {
-      print("❌ Firestore Error: $e");
+      print(" Firestore Error: $e");
     }
   }
 
@@ -629,56 +626,6 @@ const SizedBox(height: 20,),
     );
   }
 
-  // //==========================SIDE EFFECTS SECTION =========================
-  // Widget _buildKeyIngredients(BuildContext context, Productsmodel p) {
-  //   final String content = p.sideeeffects?.trim() ?? '';
-  //   if (content.isEmpty) {
-  //     return const SizedBox.shrink();
-  //   }
-  //   final List<String> ingredients = [content];
-
-  //   return Padding(
-  //     padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20.0),
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         Text(
-  //           'SIDE EFFECTS',
-  //           style: GoogleFonts.inter(
-  //             fontSize: 15,
-  //             letterSpacing: 4.0,
-  //             color: Colors.blueGrey,
-  //           ),
-  //         ),
-  //         const SizedBox(height: 10),
-  //         // Map the list to widgets
-  //         ...ingredients.map(
-  //           (item) => Column(
-  //             children: [
-  //               ListTile(
-  //                 contentPadding: EdgeInsets.zero,
-
-  //                 leading: const Padding(
-  //                   padding: EdgeInsets.only(top: 8.0),
-  //                   child: Icon(Icons.circle, size: 6, color: Colors.black),
-  //                 ),
-  //                 title: Text(
-  //                   item,
-  //                   style: GoogleFonts.inter(
-  //                     fontSize: 15,
-  //                     fontWeight: FontWeight.w400,
-  //                     height: 1.4,
-  //                   ),
-  //                 ),
-  //               ),
-  //               const Divider(thickness: 0.5, color: Color(0xFFEEEEEE)),
-  //             ],
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   //========================== IMAGE SECTION =========================
   Widget _buildImageSection(BuildContext context, Productsmodel p) {

@@ -63,7 +63,8 @@ class APIService {
 //======================= FETCH PRODUCTS FUNCTION =======================
   static Future<List<Productsmodel>> fetchProducts({
     int page = 1,
-    int perPage = 33,
+    int perPage = 100,
+   
     int? categoryId,
     String? search,
   }) async {
@@ -81,7 +82,7 @@ class APIService {
     final requestUrl =
         "${Config.baseUrl}${Config.apiPath}${Config.productsURL}?$queryString";
 
-    print("🌐 [API] Fetch products → Page: $page | Category: $categoryId");
+    print("[API] Fetch products → Page: $page | Category: $categoryId");
 
     try {
       final response = await client.get(
@@ -92,14 +93,14 @@ class APIService {
       if (response.statusCode == 200) {
         final List list = jsonDecode(response.body);
 
-        print("✅ [API] Products fetched: ${list.length} items");
+        print(" [API] Products fetched: ${list.length} items");
 
         return list.map((e) => Productsmodel.fromJson(e)).toList();
       } else {
-        print("❌ [API] Error ${response.statusCode}: ${response.body}");
+        print(" [API] Error ${response.statusCode}: ${response.body}");
       }
     } catch (e) {
-      print("🚨 [API] fetchProducts error: $e");
+      print(" [API] fetchProducts error: $e");
     }
 
     return [];
