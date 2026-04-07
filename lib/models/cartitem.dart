@@ -11,7 +11,7 @@ class CartItem {
     this.quantity = 1,
   }) {
     // Validation to ensure quantity never starts below 1
-    if (this.quantity < 1) this.quantity = 1;
+    if (quantity < 1) quantity = 1;
   }
 
   Map<String, dynamic> toMap() {

@@ -53,7 +53,7 @@ class Orderhistory extends StatelessWidget {
 
         // 3. Price
         Text(
-          "\₹$price",
+          "₹$price",
           style: Theme.of(
             context,
           ).textTheme.titleLarge?.copyWith(fontSize: 15, color: Colors.black),

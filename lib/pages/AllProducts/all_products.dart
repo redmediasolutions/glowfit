@@ -16,8 +16,8 @@ class AllProducts extends StatefulWidget {
 }
 
 class _AllProductsState extends State<AllProducts> {
-  ScrollController _scrollController=ScrollController();
-  List<Productsmodel> _products = [];
+  final ScrollController _scrollController=ScrollController();
+  final List<Productsmodel> _products = [];
   int _currentPage = 1;
   bool _isLoading = false;
   bool _hasMore = true;
@@ -177,10 +177,10 @@ Future<void> _loadProducts() async {
                   padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30),
                   itemCount: _products.length,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 30,
-                    crossAxisSpacing: 20,
-                    childAspectRatio: 0.65,
+                  crossAxisCount: 2,
+                      mainAxisSpacing: 20,
+                      crossAxisSpacing: 15,
+                      childAspectRatio: 0.7,
                   ),
                   itemBuilder: (context, index) {
                     final p = _products[index];

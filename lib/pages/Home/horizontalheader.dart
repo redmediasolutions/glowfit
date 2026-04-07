@@ -52,7 +52,7 @@ class HorizontalCollection extends StatelessWidget {
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20),
             itemCount: products.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 18),
+            separatorBuilder: (_, _) => const SizedBox(width: 18),
             itemBuilder: (context, index) {
               final product = products[index];
               final accent = palette[index % palette.length];
@@ -77,8 +77,8 @@ class _LoadingList extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       scrollDirection: Axis.horizontal,
       itemCount: 3,
-      separatorBuilder: (_, __) => const SizedBox(width: 18),
-      itemBuilder: (_, __) {
+      separatorBuilder: (_, _) => const SizedBox(width: 18),
+      itemBuilder: (_, _) {
         return Container(
           width: 210,
           decoration: BoxDecoration(
