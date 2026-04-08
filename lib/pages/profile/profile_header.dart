@@ -8,9 +8,9 @@ class ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-     final user = FirebaseAuth.instance.currentUser;
+    final user = FirebaseAuth.instance.currentUser;
 
-    // Logic to get full date (e.g., October 2023)
+    // Logic to get full date
     final String fullDate = user?.metadata.creationTime != null
         ? "${_getMonth(user!.metadata.creationTime!.month)} ${user.metadata.creationTime!.year}"
         : "March 2026";
@@ -32,9 +32,7 @@ class ProfileHeader extends StatelessWidget {
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(
-              60,
-            ), // Half of width/height for perfect circle
+            borderRadius: BorderRadius.circular(60),
             child: Container(
               width: 120,
               height: 120,
@@ -43,7 +41,6 @@ class ProfileHeader extends StatelessWidget {
                 user?.photoURL ??
                     'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
                 fit: BoxFit.cover,
-                // Error handling for broken links
                 errorBuilder: (context, error, stackTrace) =>
                     const Icon(Icons.person, color: Colors.white, size: 50),
               ),
@@ -51,26 +48,28 @@ class ProfileHeader extends StatelessWidget {
           ),
         ),
 
-
-
         const SizedBox(height: 10),
 
-        // --- Reactive Name Loader ---
+        // ---  Name Loader ---
         StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('users')
-              .doc(user?.uid)
-              .snapshots(),
+          
+          stream: user?.uid != null 
+              ? FirebaseFirestore.instance.collection('users').doc(user!.uid).snapshots()
+              : const Stream.empty(),
           builder: (context, snapshot) {
-            // Use Auth name as initial value, then Firestore name once loaded
             String displayName = "Guest User";
 
             if (snapshot.hasData && snapshot.data!.exists) {
-              displayName =
-                  snapshot.data!.get('name') ??
-                  user?.displayName ??
-                  "Guest User";
+             
+              final data = snapshot.data!.data() as Map<String, dynamic>?;
+              
+              if (data != null && data.containsKey('name')) {
+                displayName = data['name'];
+              } else {
+                displayName = user?.displayName ?? "Guest User";
+              }
             } else {
+              
               displayName = user?.displayName ?? "Guest User";
             }
 
@@ -78,7 +77,7 @@ class ProfileHeader extends StatelessWidget {
               displayName,
               textAlign: TextAlign.center,
               style: GoogleFonts.lora(
-                fontSize: 32, // Adjusted size for better fit
+                fontSize: 32,
                 fontWeight: FontWeight.w500,
                 fontStyle: FontStyle.italic,
                 color: Colors.black,
@@ -99,22 +98,12 @@ class ProfileHeader extends StatelessWidget {
         ),
       ],
     );
-    
   }
-   String _getMonth(int month) {
+
+  String _getMonth(int month) {
     const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
     ];
     return months[month - 1];
   }

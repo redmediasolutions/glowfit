@@ -34,10 +34,7 @@ class Profile extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [ProfileHeader()],
-                ),
+                Center(child: ProfileHeader()),
                 //================Active Routine====================
                 const SizedBox(height: 35),
                 ActiveRoutiencard(),
