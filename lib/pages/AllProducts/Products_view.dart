@@ -1,7 +1,6 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:glowfit/Auth/mobilelogin.dart';
@@ -101,7 +100,23 @@ class _ProductsViewState extends State<ProductsView> {
 
     // If user is not logged in, you should show your login sheet here
     if (user == null || user.isAnonymous) {
-      return false;
+      print('⚠️ User is anonymous or not logged in');
+
+      await showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        enableDrag: false,
+        builder: (context) {
+          return Padding(
+            padding: MediaQuery.viewInsetsOf(context),
+            child: MobileLogin(),
+          );
+        },
+      );
+
+      print('⛔ Cart action stopped');
+      return; // 🛑 STOP execution here
     }
 
     final String productId = p.id.toString();
@@ -112,8 +127,6 @@ class _ProductsViewState extends State<ProductsView> {
         .doc(productId);
 
     try {
-      // We use .set with merge: true so that if the item doesn't exist, it is created.
-      // If it DOES exist, only the quantity and updatedAt change.
       await docRef.set({
         'productId': p.id,
         'name': p.name,
@@ -123,11 +136,9 @@ class _ProductsViewState extends State<ProductsView> {
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      print("✅ Cart Updated: $productId");
-      return true;
+      print(" Cart Updated: $productId");
     } catch (e) {
-      print("❌ Firestore Error: $e");
-      return false;
+      print(" Firestore Error: $e");
     }
   }
 
@@ -291,17 +302,8 @@ class _ProductsViewState extends State<ProductsView> {
 
             Expanded(
               child: GestureDetector(
-                onTap: () async {
-                  if (_isGuest()) {
-                    _showLoginSnackBar();
-                    context.go('/login');
-                    return;
-                  }
-                  final bool added = await _updateQty(
-                    p,
-                    1,
-                  ); // Pass the whole object 'p'
-                  if (!added) return;
+                onTap: ()  {
+                  _updateQty(p, 1); // Pass the whole object 'p'
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Added to cart'),
@@ -353,31 +355,40 @@ class _ProductsViewState extends State<ProductsView> {
             const SizedBox(height: 10),
             scrollTriggered(_description(context, p), 'desc'),
             const SizedBox(height: 15),
-         Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-  child: Row(
-    children: [
-      Expanded(child: _keywords(context, Icons.science_outlined, "Composition")),
-      const SizedBox(width: 10), // Gap between frames
-      Expanded(child: _keywords(context, Icons.opacity, "Hydrating")),
-      const SizedBox(width: 10),
-      Expanded(child: _keywords(context, Icons.verified_outlined, "Certified")),
-    ],
-  ),
-),
-            
-          
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _keywords(
+                      context,
+                      Icons.science_outlined,
+                      "Composition",
+                    ),
+                  ),
+                  const SizedBox(width: 10), // Gap between frames
+                  Expanded(
+                    child: _keywords(context, Icons.opacity, "Hydrating"),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _keywords(
+                      context,
+                      Icons.verified_outlined,
+                      "Certified",
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
-  const SizedBox(height: 15),
+            const SizedBox(height: 15),
             _buildProductDetails(p),
             const SizedBox(height: 40),
-        
+
             scrollTriggered(_buildImageSection(context, p), 'Imagesection'),
 
             const SizedBox(height: 100),
-
-      
-
           ],
         ),
       ),
@@ -481,84 +492,86 @@ class _ProductsViewState extends State<ProductsView> {
     );
   }
 
-  
-//=======================KeyWords==========================
- Widget _keywords(BuildContext context, IconData symbol, String label) {
-  return Container(
-    height: 90,
-    padding: const EdgeInsets.all(8),
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(15),
-      color: const Color(0xFFF8E9F0), 
-    ),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Icon(symbol, size: 24, color: const Color(0xFF8A206E)),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          maxLines: 1, // Prevents text from pushing the frame height
-          overflow: TextOverflow.ellipsis, // Adds '...' if the word is too long
-          style: GoogleFonts.inter(
-            fontSize: 11, // Slightly smaller to ensure fit on small screens
-            fontWeight: FontWeight.w500,
-            color: const Color(0xFF8A206E),
+  //=======================KeyWords==========================
+  Widget _keywords(BuildContext context, IconData symbol, String label) {
+    return Container(
+      height: 90,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(15),
+        color: const Color(0xFFF8E9F0),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(symbol, size: 24, color: const Color(0xFF8A206E)),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1, // Prevents text from pushing the frame height
+            overflow:
+                TextOverflow.ellipsis, // Adds '...' if the word is too long
+            style: GoogleFonts.inter(
+              fontSize: 11, // Slightly smaller to ensure fit on small screens
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF8A206E),
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
   //======================= content=============================
 
   Widget _buildProductDetails(Productsmodel p) {
-  return Column(
-    children: [
-      _customExpansionTile("SideEffects", p.sideeeffects?? 'No Information'),
-      const Divider(height: 1),
-      _customExpansionTile("How Does it Work", p.working??'No Information'),
-      
-    ],
-  );
-}
-
-Widget _customExpansionTile(String title, String content) {
-  return Theme(
-    // This removes the default border/lines that ExpansionTile adds when opened
-    data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-    child: ExpansionTile(
-      title: Text(
-        title,
-        style: GoogleFonts.inter(
-          fontSize: 18,
-          fontWeight: FontWeight.w500,
-          color: const Color(0xFF1D212C), // Dark slate/black
-        ),
-      ),
-      trailing: const Icon(
-        Icons.add,
-        color: Color(0xFF802060), // The purple/pink color from your image
-        size: 26,
-      ),
-      // This icon appears when the tile is open
-      expandedAlignment: Alignment.topLeft,
-      childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+    return Column(
       children: [
-        Text(
-          content,
+        _customExpansionTile("SideEffects", p.sideeeffects ?? 'No Information'),
+        const Divider(height: 1),
+        _customExpansionTile("How Does it Work", p.working ?? 'No Information'),
+      ],
+    );
+  }
+
+  Widget _customExpansionTile(String title, String content) {
+    return Theme(
+      // This removes the default border/lines that ExpansionTile adds when opened
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        title: Text(
+          title,
           style: GoogleFonts.inter(
-            fontSize: 15,
-            height: 1.5,
-            color: Colors.black54,
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF1D212C), // Dark slate/black
           ),
         ),
-      ],
-    ),
-  );
-}
+        trailing: const Icon(
+          Icons.add,
+          color: Color(0xFF802060), // The purple/pink color from your image
+          size: 26,
+        ),
+        // This icon appears when the tile is open
+        expandedAlignment: Alignment.topLeft,
+        childrenPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 10,
+        ),
+        children: [
+          Text(
+            content,
+            style: GoogleFonts.inter(
+              fontSize: 15,
+              height: 1.5,
+              color: Colors.black54,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   //========================== PRODUCT DETAILS SECTION =========================
   Widget _productdetails(BuildContext context, Productsmodel p) {
@@ -589,26 +602,26 @@ Widget _customExpansionTile(String title, String content) {
               ),
             ],
           ),
-const SizedBox(height: 20,),
+          const SizedBox(height: 20),
           Row(
             spacing: 10,
             children: [
               Text(
                 'Composition : -',
                 textAlign: TextAlign.left,
-                style:Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontSize: 18
-                )
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontSize: 18),
               ),
               Expanded(
                 child: Text(
                   p.composition ?? '',
                   softWrap: true,
                   textAlign: TextAlign.justify,
-                style:Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: Colors.grey,
-                  fontSize: 15
-                )
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Colors.grey,
+                    fontSize: 15,
+                  ),
                 ),
               ),
             ],
@@ -620,17 +633,17 @@ const SizedBox(height: 20,),
               Text(
                 'Package : -',
                 textAlign: TextAlign.left,
-                style:Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontSize: 18
-                )
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontSize: 18),
               ),
               Text(
                 p.packagesize ?? '',
                 textAlign: TextAlign.justify,
-               style:Theme.of(context).textTheme.labelMedium?.copyWith(
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   color: Colors.grey,
-                  fontSize: 15
-                )
+                  fontSize: 15,
+                ),
               ),
             ],
           ),
@@ -641,17 +654,17 @@ const SizedBox(height: 20,),
               Text(
                 'Brand Name : -',
                 textAlign: TextAlign.left,
-               style:Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontSize: 18
-                )
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontSize: 18),
               ),
               Text(
                 p.brand ?? '',
                 textAlign: TextAlign.justify,
-                style:Theme.of(context).textTheme.labelMedium?.copyWith(
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   color: Colors.grey,
-                  fontSize: 15
-                )
+                  fontSize: 15,
+                ),
               ),
             ],
           ),
@@ -731,57 +744,6 @@ const SizedBox(height: 20,),
     );
   }
 
-  // //==========================SIDE EFFECTS SECTION =========================
-  // Widget _buildKeyIngredients(BuildContext context, Productsmodel p) {
-  //   final String content = p.sideeeffects?.trim() ?? '';
-  //   if (content.isEmpty) {
-  //     return const SizedBox.shrink();
-  //   }
-  //   final List<String> ingredients = [content];
-
-  //   return Padding(
-  //     padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20.0),
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         Text(
-  //           'SIDE EFFECTS',
-  //           style: GoogleFonts.inter(
-  //             fontSize: 15,
-  //             letterSpacing: 4.0,
-  //             color: Colors.blueGrey,
-  //           ),
-  //         ),
-  //         const SizedBox(height: 10),
-  //         // Map the list to widgets
-  //         ...ingredients.map(
-  //           (item) => Column(
-  //             children: [
-  //               ListTile(
-  //                 contentPadding: EdgeInsets.zero,
-
-  //                 leading: const Padding(
-  //                   padding: EdgeInsets.only(top: 8.0),
-  //                   child: Icon(Icons.circle, size: 6, color: Colors.black),
-  //                 ),
-  //                 title: Text(
-  //                   item,
-  //                   style: GoogleFonts.inter(
-  //                     fontSize: 15,
-  //                     fontWeight: FontWeight.w400,
-  //                     height: 1.4,
-  //                   ),
-  //                 ),
-  //               ),
-  //               const Divider(thickness: 0.5, color: Color(0xFFEEEEEE)),
-  //             ],
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
   //========================== IMAGE SECTION =========================
   Widget _buildImageSection(BuildContext context, Productsmodel p) {
     final double sectionHeight = MediaQuery.of(context).size.height * 0.8;
@@ -846,5 +808,5 @@ const SizedBox(height: 20,),
     );
   }
 
-//   
+  //
 }

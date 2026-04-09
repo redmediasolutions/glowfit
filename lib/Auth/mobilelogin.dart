@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -26,113 +28,141 @@ class _MobileLoginState extends State<MobileLogin> {
   final Color secondaryColor = const Color(0xFFF6F1EE);
   final Color inkColor = const Color(0xFF1D212C);
 
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _otpController.dispose();
+    super.dispose();
+  }
 
-//================================ save user to firestore after successful login ================================
-Future<void> _saveUserToFirestore(User user) async {
-  final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+//================================ SAVE USER TO FIRESTORE WITH TIMEOUT ================================
+  Future<void> _saveUserToFirestore(User user) async {
+    try {
+      final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
 
-  await userDoc.set({
-    'uid': user.uid,
-    'phoneNumber': user.phoneNumber,
-    'lastLogin': FieldValue.serverTimestamp(),
-    // We set these as empty if it's a new user, 
-    // so the Profile page can fetch them later
-    'full_name': user.displayName ?? "", 
-    'createdAt': FieldValue.serverTimestamp(),
-  }, SetOptions(merge: true));
-}
-//===============================OTP SENDING LOGIC===============================
+      await userDoc.set({
+        'uid': user.uid,
+        'phoneNumber': user.phoneNumber,
+        'lastLogin': FieldValue.serverTimestamp(),
+        'full_name': user.displayName ?? "", 
+        'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true)).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw TimeoutException('Firestore save took too long');
+        },
+      );
+    } catch (e) {
+      debugPrint("Firestore save error: $e");
+      // Don't rethrow - user is already authenticated, Firestore will retry
+    }
+  }
+
+//===============================OTP SENDING LOGIC - FIXED FOR iOS ===============================
   Future<void> _sendOtp() async {
+    if (!mounted) return;
+    
     setState(() => _isLoading = true);
     final String fullPhoneNumber = "+91${_phoneController.text.trim()}";
+    
     try {
       await _auth.verifyPhoneNumber(
-        phoneNumber:fullPhoneNumber,
-      verificationCompleted: (PhoneAuthCredential credential) async {
-  UserCredential userCredential = await _auth.signInWithCredential(credential);
-  if (userCredential.user != null) {
-    await _saveUserToFirestore(userCredential.user!);
-  }
-  _navigateToHome();
-},
+        phoneNumber: fullPhoneNumber,
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          if (!mounted) return;
+          
+          try {
+            UserCredential userCredential = await _auth.signInWithCredential(credential);
+            
+            if (!mounted) return;
+            
+            if (userCredential.user != null) {
+              await _saveUserToFirestore(userCredential.user!);
+            }
+            
+            if (!mounted) return;
+            _navigateToHomeIfMounted();
+            
+          } catch (e) {
+            debugPrint("Auto-verification error: $e");
+          }
+        },
         verificationFailed: (FirebaseAuthException e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Verification Failed: ${e.message}")),
-          );
-          setState(() => _isLoading = false);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Verification Failed: ${e.message}")),
+            );
+            setState(() => _isLoading = false);
+          }
         },
         codeSent: (String verificationId, int? resendToken) {
-          setState(() {
-            _verificationId = verificationId;
-            _isOtpSent = true;
-            _isLoading = false;
-          });
+          if (mounted) {
+            setState(() {
+              _verificationId = verificationId;
+              _isOtpSent = true;
+              _isLoading = false;
+            });
+          }
         },
         codeAutoRetrievalTimeout: (String verificationId) {
           _verificationId = verificationId;
         },
+        timeout: const Duration(seconds: 120),
       );
     } catch (e) {
-      debugPrint("Error: $e");
-      setState(() => _isLoading = false);
+      debugPrint("Error sending OTP: $e");
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to send OTP. Try again.")),
+        );
+      }
     }
   }
   
-//===============================OPT VERIFICATION LOGIC===============================
-Future<void> _verifyOtp() async {
-  setState(() => _isLoading = true);
-  try {
-    PhoneAuthCredential credential = PhoneAuthProvider.credential(
-      verificationId: _verificationId,
-      smsCode: _otpController.text.trim(),
-    );
-
-    UserCredential userCredential = await _auth.signInWithCredential(credential);
-
-    // 1. SAVE TO FIRESTORE
-    if (userCredential.user != null) {
-      await _saveUserToFirestore(userCredential.user!);
-    }
-
-    // 2. THE FIX: Check if the widget is still mounted before using context
-    if (!mounted) return; 
-
-    _navigateToHome();
+//===============================OTP VERIFICATION LOGIC - FIXED FOR iOS ===============================
+  Future<void> _verifyOtp() async {
+    if (!mounted) return;
     
-  } catch (e) {
-    // 3. THE FIX: Check here too before showing a SnackBar
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Invalid OTP. Try again.")),
-      );
-    }
-  } finally {
-    // 4. THE FIX: Check before calling setState
-    if (mounted) {
-      setState(() => _isLoading = false);
-    }
-  }
-}
-  void _navigateToHome() {
-    context.go('/home', extra: int.parse(categoryId));
-  }
-
-  Future<void> _handleGuestLogin() async {
     setState(() => _isLoading = true);
+    
     try {
-      await FirebaseAuth.instance.signInAnonymously();
+      PhoneAuthCredential credential = PhoneAuthProvider.credential(
+        verificationId: _verificationId,
+        smsCode: _otpController.text.trim(),
+      );
+
+      UserCredential userCredential = await _auth.signInWithCredential(credential);
+
+      // CHECK MOUNTED BEFORE PROCEEDING
       if (!mounted) return;
-      _navigateToHome();
+
+      // SAVE TO FIRESTORE
+      if (userCredential.user != null) {
+        await _saveUserToFirestore(userCredential.user!);
+      }
+
+      // CHECK MOUNTED AGAIN BEFORE NAVIGATION
+      if (!mounted) return;
+
+      // USE SAFE NAVIGATION
+      _navigateToHomeIfMounted();
+      
     } on FirebaseAuthException catch (e) {
       if (mounted) {
+        String errorMsg = "Invalid OTP. Try again.";
+        if (e.code == 'invalid-verification-code') {
+          errorMsg = "The code you entered is incorrect.";
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Guest Login Failed: ${e.message}")),
+          SnackBar(content: Text(errorMsg)),
         );
       }
     } catch (e) {
+      debugPrint("OTP verification error: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Guest Login Failed")),
+          const SnackBar(content: Text("Verification failed. Try again.")),
         );
       }
     } finally {
@@ -141,7 +171,58 @@ Future<void> _verifyOtp() async {
       }
     }
   }
+  //=============================== GUEST LOGIN LOGIC ===============================
+Future<void> _handleGuestLogin() async {
+  if (_isLoading) return; // Prevent double taps
 
+  setState(() => _isLoading = true);
+  try {
+    // 1. Perform Firebase Auth
+    await FirebaseAuth.instance.signInAnonymously();
+
+    if (mounted) {
+      // 2. IMPORTANT: Close the BottomSheet first.
+      // This prevents the "keyReservation" crash by clearing the modal
+      // before the Router tries to rebuild the background page.
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Logged in as Guest Successfully!"),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // 3. Navigate to home using .go (replaces stack)
+      context.go('/home');
+    }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Guest Login Failed: $e")),
+      );
+    }
+  } finally {
+    if (mounted) setState(() => _isLoading = false);
+  }
+}
+
+//=============================== SAFE NAVIGATION ===============================
+void _navigateToHomeIfMounted() {
+  if (!mounted) return;
+
+  try {
+    // Always pop the sheet before switching main routes with GoRouter
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
+    
+    // Pass extra if your route requires the categoryId
+    context.go('/home', extra: int.parse(categoryId));
+  } catch (e) {
+    debugPrint("Navigation error: $e");
+  }
+}
 //============================ UI BUILD METHOD WITH MODERN DESIGN ==============================
   @override
   Widget build(BuildContext context) {
@@ -244,204 +325,52 @@ Future<void> _verifyOtp() async {
                               letterSpacing: -0.4,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _isOtpSent
-                                ? "We sent a 6-digit code to +91 ${_phoneController.text}"
-                                : "Sign in to save your cart and track orders.",
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: inkColor.withOpacity(0.6),
-                            ),
-                          ),
-                          const SizedBox(height: 26),
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(22),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.06),
-                                  blurRadius: 18,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                if (!_isOtpSent && _showPhoneInput) ...[
-                                  TextField(
-                                    controller: _phoneController,
-                                    keyboardType: TextInputType.phone,
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                      color: inkColor,
-                                    ),
-                                    decoration: InputDecoration(
-                                      prefixIcon: const Icon(Icons.phone_android),
-                                      prefixText: "+91 ",
-                                      prefixStyle: TextStyle(
-                                        color: inkColor,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                      hintText: "Enter Mobile Number",
-                                      filled: true,
-                                      fillColor: secondaryColor,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 18),
-                                ],
-                                if (_isOtpSent) ...[
-                                  Center(
-                                    child: Pinput(
-                                      length: 6,
-                                      controller: _otpController,
-                                      onCompleted: (pin) => _verifyOtp(),
-                                      defaultPinTheme: PinTheme(
-                                        width: 50,
-                                        height: 56,
-                                        textStyle: const TextStyle(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: secondaryColor,
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                      ),
-                                      focusedPinTheme: PinTheme(
-                                        width: 50,
-                                        height: 56,
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: primaryColor,
-                                            width: 2,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 18),
-                                ],
-                                _isLoading
-                                    ? const Center(
-                                        child: CircularProgressIndicator(),
-                                      )
-                                    : Column(
-                                        children: [
-                                          SizedBox(
-                                            width: double.infinity,
-                                            height: 56,
-                                            child: ElevatedButton(
-                                              onPressed: _isOtpSent
-                                                  ? _verifyOtp
-                                                  : () {
-                                                      if (!_showPhoneInput) {
-                                                        setState(() {
-                                                          _showPhoneInput = true;
-                                                        });
-                                                        return;
-                                                      }
-                                                      _sendOtp();
-                                                    },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: primaryColor,
-                                                foregroundColor: Colors.white,
-                                                elevation: 0,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(16),
-                                                ),
-                                              ),
-                                              child: Text(
-                                                _isOtpSent
-                                                    ? "Verify Now"
-                                                    : "Continue with Phone",
-                                                style: const TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          if (!_isOtpSent && allowGuest) ...[
-                                            const SizedBox(height: 12),
-                                            SizedBox(
-                                              width: double.infinity,
-                                              height: 54,
-                                              child: OutlinedButton(
-                                                onPressed: _handleGuestLogin,
-                                                style: OutlinedButton.styleFrom(
-                                                  foregroundColor: primaryColor,
-                                                  side: BorderSide(
-                                                    color: primaryColor,
-                                                  ),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(16),
-                                                  ),
-                                                ),
-                                                child: const Text(
-                                                  "Continue as Guest",
-                                                  style: TextStyle(
-                                                    fontSize: 15,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                              ],
-                            ),
-                          ),
-                          if (!_isOtpSent && _showPhoneInput) ...[
-                            const SizedBox(height: 12),
-                            Center(
-                              child: TextButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _showPhoneInput = false;
-                                  });
-                                },
-                                child: Text(
-                                  "Back",
-                                  style: TextStyle(
-                                    color: primaryColor,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                          if (_isOtpSent) ...[
-                            const SizedBox(height: 12),
-                            Center(
-                              child: TextButton(
-                                onPressed: () => setState(() => _isOtpSent = false),
-                                child: Text(
-                                  "Edit Phone Number",
-                                  style: TextStyle(
-                                    color: primaryColor,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                          const Spacer(),
-                        ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 25,),
+                    SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: OutlinedButton(
+                    onPressed: _isLoading ? null : _handleGuestLogin,
+                    onLongPress: () {
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (context) => const DeveloperLoginPage(),
+                      //   ),
+                      // );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                        color: const Color.fromARGB(255, 194, 194, 194),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      'Login as Guest',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: const Color.fromARGB(255, 122, 122, 122),
+                      ),
+                    ),
+                  ),
+                ),
+
+              if (_isOtpSent) ...[
+                const SizedBox(height: 15),
+                Center(
+                  child: TextButton(
+                    onPressed: () => setState(() => _isOtpSent = false),
+                    child: Text(
+                      "Edit Phone Number",
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),

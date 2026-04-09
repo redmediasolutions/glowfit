@@ -23,7 +23,7 @@ class MainApp extends StatelessWidget {
     return MaterialApp.router(
    routerConfig: AppRouter.router,
       debugShowCheckedModeBanner: false,
-      title: 'Glow & Fit',
+      title: 'Glad Skin',
       theme: ThemeData()
     );
   }

@@ -14,6 +14,11 @@ class Searchpage extends StatefulWidget {
 }
 
 class _SearchpageState extends State<Searchpage> {
+  final ScrollController _scrollController=ScrollController();
+   final List<Productsmodel> _products = [];
+   int _currentPage = 1;
+  bool _isLoading = false;
+  bool _hasMore = true;
   late Future<List<Productsmodel>> _productsFuture;
   int? _selectedCategoryId;
   int _resultCount = 0;
@@ -22,6 +27,46 @@ class _SearchpageState extends State<Searchpage> {
   void initState() {
     super.initState();
     _fetchFilteredProducts(); 
+     _productsFuture = APIService.fetchProducts();
+    _loadProducts(); // Initial load
+    
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+        _loadProducts();
+      }
+    });
+  }
+//====================Load Products==========================
+Future<void> _loadProducts() async {
+    if (_isLoading || !_hasMore) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final newProducts = await APIService.fetchProducts(
+        page: _currentPage,
+        perPage: 10, // Fetch smaller chunks
+      );
+
+      setState(() {
+        _isLoading = false;
+        if (newProducts.isEmpty) {
+          _hasMore = false;
+        } else {
+          _currentPage++;
+          _products.addAll(newProducts);
+        }
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      debugPrint("Error: $e");
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   //=====================FILTER & SEARCH LOGIC=====================//
@@ -56,6 +101,7 @@ class _SearchpageState extends State<Searchpage> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
+          controller: _scrollController,
           physics: const BouncingScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,45 +151,48 @@ class _SearchpageState extends State<Searchpage> {
               ),
 
             //===================== PRODUCT GRID ====================//
-              FutureBuilder<List<Productsmodel>>(
-                future: _productsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: Padding(padding: EdgeInsets.all(50), child: CircularProgressIndicator()));
-                  }
-                  if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Padding(padding: EdgeInsets.all(50), child: Text("No products found")));
-                  }
-
-                  final products = snapshot.data!;
-                  return GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    itemCount: products.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
+              if (_products.isEmpty && _isLoading)
+                const Center(child: CircularProgressIndicator())
+              else if (_products.isEmpty)
+                const Center(child: Text("No products found"))
+              else
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(), // Keep this as is
+                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30),
+                  itemCount: _products.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
                       mainAxisSpacing: 20,
                       crossAxisSpacing: 15,
                       childAspectRatio: 0.7,
-                    ),
-                    itemBuilder: (context, index) {
-                      final p = products[index];
-                      return GestureDetector(
-                        onTap: () => context.push('/productview', extra: p),
-                        child: ProductsList(
-                          id: p.id.toString(),
-                          name: p.name,
-                          imageUrl: p.image,
-                          regularPrice: p.regularPrice,
-                          product: p,
-                          onAddToCart: () {},
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
+                  ),
+                  itemBuilder: (context, index) {
+                    final p = _products[index];
+                    return GestureDetector(
+                      onTap: (){
+                       context.push('/productview', extra: p);
+                      },
+                      child: ProductsList(
+                        id: p.id.toString(),
+                        name: p.name,
+                        imageUrl: p.image,
+                        regularPrice: p.salePrice,
+                        product: p,
+                        onAddToCart: () => print("Added ${p.name}"),
+                      ),
+                    );
+                  },
+                ),
+
+              // Loading indicator at the bottom
+              if (_isLoading && _products.isNotEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+
+              const SizedBox(height: 100),
             ],
           ),
         ),

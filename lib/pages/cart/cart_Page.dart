@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:glowfit/pages/splashscreen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -75,8 +76,9 @@ class _CartPageState extends State<CartPage> {
           .collection('items')
           .snapshots(),
       builder: (context, snapshot) {
-        if (snapshot.hasError)
+        if (snapshot.hasError) {
           return Center(child: Text("Error: ${snapshot.error}"));
+        }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
             child: CircularProgressIndicator(color: Colors.black),
@@ -333,7 +335,11 @@ class _CartPageState extends State<CartPage> {
             borderRadius: BorderRadius.circular(18),
           ),
         ),
-        onPressed: () => context.go('/splash'),
+        onPressed: (){
+       Navigator.push(context,MaterialPageRoute(builder: (context)=>SuccessSplashScreen()));
+          
+        },
+
         child: Text(
           "PROCEED TO CHECKOUT",
           style: GoogleFonts.inter(
