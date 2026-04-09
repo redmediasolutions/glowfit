@@ -168,19 +168,58 @@ class _MobileLoginState extends State<MobileLogin> {
       }
     }
   }
+  //=============================== GUEST LOGIN LOGIC ===============================
+Future<void> _handleGuestLogin() async {
+  if (_isLoading) return; // Prevent double taps
 
-  /// SAFE NAVIGATION - Won't crash even if context is disposed
-  void _navigateToHomeIfMounted() {
-    if (!mounted) return;
-    
-    try {
-      context.go('/home', extra: int.parse(categoryId));
-    } catch (e) {
-      debugPrint("Navigation error: $e");
-      // Silent fail - widget is likely disposed
+  setState(() => _isLoading = true);
+  try {
+    // 1. Perform Firebase Auth
+    await FirebaseAuth.instance.signInAnonymously();
+
+    if (mounted) {
+      // 2. IMPORTANT: Close the BottomSheet first.
+      // This prevents the "keyReservation" crash by clearing the modal
+      // before the Router tries to rebuild the background page.
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Logged in as Guest Successfully!"),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // 3. Navigate to home using .go (replaces stack)
+      context.go('/home');
     }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Guest Login Failed: $e")),
+      );
+    }
+  } finally {
+    if (mounted) setState(() => _isLoading = false);
   }
+}
 
+//=============================== SAFE NAVIGATION ===============================
+void _navigateToHomeIfMounted() {
+  if (!mounted) return;
+
+  try {
+    // Always pop the sheet before switching main routes with GoRouter
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
+    
+    // Pass extra if your route requires the categoryId
+    context.go('/home', extra: int.parse(categoryId));
+  } catch (e) {
+    debugPrint("Navigation error: $e");
+  }
+}
 //============================ UI BUILD METHOD WITH MODERN DESIGN ==============================
   @override
   Widget build(BuildContext context) {
@@ -313,6 +352,38 @@ class _MobileLoginState extends State<MobileLogin> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 25,),
+                    SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: OutlinedButton(
+                    onPressed: _isLoading ? null : _handleGuestLogin,
+                    onLongPress: () {
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (context) => const DeveloperLoginPage(),
+                      //   ),
+                      // );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                        color: const Color.fromARGB(255, 194, 194, 194),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      'Login as Guest',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: const Color.fromARGB(255, 122, 122, 122),
+                      ),
+                    ),
+                  ),
+                ),
 
               if (_isOtpSent) ...[
                 const SizedBox(height: 15),
