@@ -7,10 +7,13 @@ import 'package:glowfit/pages/AllProducts/Products_view.dart';
 import 'package:glowfit/pages/AllProducts/all_products.dart';
 import 'package:glowfit/pages/Home/home.dart';
 import 'package:glowfit/pages/Search/searchPage.dart';
+import 'package:glowfit/pages/address/address.dart';
+import 'package:glowfit/pages/cart/cart_Page.dart';
 import 'package:glowfit/pages/profile/account/editprofile.dart';
 import 'package:glowfit/pages/profile/account/loyalitypoints.dart';
 import 'package:glowfit/pages/profile/profile.dart';
-import 'package:glowfit/pages/splashscreen.dart';
+import 'package:glowfit/pages/ordersucessscreen.dart';
+import 'package:glowfit/pages/splashscreen/splashscreen.dart';
 import 'package:glowfit/shell.dart';
 
 import 'package:go_router/go_router.dart';
@@ -34,36 +37,40 @@ class AppRouter {
 
     /// AUTH REDIRECT
     redirect: (context, state) {
-      final bool isInitialized = authStateNotifier.isInitialized;
-      final user = authStateNotifier.user;
+  final bool isInitialized = authStateNotifier.isInitialized;
+  final user = authStateNotifier.user;
 
-      final isLoginPage = state.matchedLocation == '/login';
-      final isSplashPage = state.matchedLocation == '/splash';
+  final isLoginPage = state.matchedLocation == '/login';
+  final isSplashPage = state.matchedLocation == '/splash';
 
-      /// Wait for FirebaseAuth to restore the session
-      if (!isInitialized) {
-        return isSplashPage ? null : '/splash';
-      }
+  /// Wait until Firebase restores session
+  if (!isInitialized) {
+    return isSplashPage ? null : '/splash';
+  }
 
-      /// If NOT logged in → go to login
-      if (user == null) {
-        return isLoginPage ? null : '/login';
-      }
+  /// After init, DO NOT block splash
+  /// Splash will handle navigation
+  if (isSplashPage) return null;
 
-      /// If logged in and trying to open login or splash → go home
-      if ((isLoginPage || isSplashPage)) {
-        return '/home';
-      }
+  /// If NOT logged in → login
+  if (user == null) {
+    return isLoginPage ? null : '/login';
+  }
 
-      return null;
-    },
+  /// If logged in → home
+  if (isLoginPage) {
+    return '/home';
+  }
+
+  return null;
+},
 
     routes: [
 
       /// SPLASH
       GoRoute(
         path: '/splash',
-        builder: (context, state) => const SuccessSplashScreen(),
+        builder: (context, state) => const SplashScreen(),
       ),
       GoRoute(
         path: '/points',
@@ -77,10 +84,6 @@ class AppRouter {
       ),
          GoRoute(
         path: '/editprofile',
-        builder: (context, state) => const Editprofile(),
-      ),
-      GoRoute(
-        path: '/address',
         builder: (context, state) => const Editprofile(),
       ),
       /// PRODUCT VIEW (outside bottom nav)
@@ -99,11 +102,21 @@ class AppRouter {
           );
         },
       ),
+       GoRoute(
+        path: '/cart',
+        builder: (context, state) => const CartPage(),
+      ),
+
+      GoRoute(
+        path: '/address',
+        builder: (context, state) => const AddressPage(),
+      ),
 
       /// SHELL ROUTE (BOTTOM NAV)
       ShellRoute(
         builder: (context, state, child) {
-          return ShellPage(child: child);
+          return ShellPage(cartCount: 0,
+          child: child);
         },
         routes: [
 

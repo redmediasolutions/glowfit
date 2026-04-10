@@ -4,10 +4,8 @@ import 'package:glowfit/firebase_options.dart';
 import 'package:glowfit/navbar.dart';
 
 void main() async {
-  // 1. This must be the first line
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 2. This starts the "engine" for your database/auth
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
